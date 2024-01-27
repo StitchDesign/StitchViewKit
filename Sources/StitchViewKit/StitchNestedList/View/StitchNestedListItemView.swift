@@ -27,11 +27,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     
     var body: some View {
         Group {
-            HStack {
-                itemViewBuilder(item)
-                Spacer()
-            }
-            .padding()
+            itemViewBuilder(item)
             .modifier(DragIndexReader(item: item,
                                       sidebarItemDragged: $sidebarItemDragged,
                                       dragCandidateItemId: $dragCandidateItemId,

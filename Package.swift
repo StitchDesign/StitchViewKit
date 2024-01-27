@@ -10,9 +10,9 @@ let package = Package(
     ],
     products: [
         .library(name: "StitchViewKit",
-                 targets: ["StitchNestedList"])
+                 targets: ["StitchViewKit"])
     ],
     targets: [
-        .target(name: "StitchNestedList")
+        .target(name: "StitchViewKit")
     ]
 )

@@ -13,11 +13,16 @@ let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
     @State private var selections = Set<Data.ID>()
     @State private var dragY: CGFloat? = .zero
-    @State var sidebarItemDragged: Data? = nil
+    @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
     
     @Binding var data: [Data]
     @ViewBuilder var itemViewBuilder: (Data) -> RowContent
+    
+    public init(data: Binding<[Data]>, itemViewBuilder: @escaping (Data) -> RowContent) {
+        self._data = data
+        self.itemViewBuilder = itemViewBuilder
+    }
     
     public var body: some View {
         ZStack {

@@ -11,6 +11,12 @@ public protocol StitchNestedListElement: Identifiable, Equatable {
     var children: [Self]? { get set }
 }
 
+extension StitchNestedListElement {
+    var isGroup: Bool {
+        self.children != nil
+    }
+}
+
 extension Array where Element: StitchNestedListElement {
     var flattenedItems: [Element] {
         self.flatMap { item in
