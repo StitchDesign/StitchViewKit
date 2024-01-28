@@ -65,7 +65,6 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                         
                         Spacer()
                     }
-                    .border(.green)
                 }
             }
             .modifier(ItemGestureModifier(dragY: $dragY))
