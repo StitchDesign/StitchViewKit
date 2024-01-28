@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Elliot Boschwitz on 1/26/24.
 //
@@ -13,6 +13,7 @@ struct DragIndexReader<Data: StitchNestedListElement>: ViewModifier {
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
     let dragY: CGFloat?
+    let yOffsetDragHack: CGFloat
     
     func body(content: Content) -> some View {
         content
@@ -27,7 +28,7 @@ struct DragIndexReader<Data: StitchNestedListElement>: ViewModifier {
                             }
                             
                             // Manual offset to get drag to match boundary boxes better
-                            dragY += 40
+                            dragY += yOffsetDragHack
                             
                             let frame = geometry.frame(in: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
                             

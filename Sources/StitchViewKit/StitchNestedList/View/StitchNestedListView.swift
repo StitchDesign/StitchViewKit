@@ -17,10 +17,15 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     @State private var dragCandidateItemId: Data.ID? = nil
     
     @Binding var data: [Data]
+    /// Item locations fail to use named coordinate space, hack offers a temporary workaround
+    let yOffsetDragHack: CGFloat
     @ViewBuilder var itemViewBuilder: (Data) -> RowContent
     
-    public init(data: Binding<[Data]>, itemViewBuilder: @escaping (Data) -> RowContent) {
+    public init(data: Binding<[Data]>,
+                yOffsetDragHack: CGFloat,
+     itemViewBuilder: @escaping (Data) -> RowContent) {
         self._data = data
+        self.yOffsetDragHack = yOffsetDragHack
         self.itemViewBuilder = itemViewBuilder
     }
     
@@ -32,6 +37,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              isParentSelected: false,
                                              selections: $selections,
                                              dragY: dragY,
+                                             yOffsetDragHack: self.yOffsetDragHack,
                                              sidebarItemDragged: self.$sidebarItemDragged,
                                              dragCandidateItemId: self.$dragCandidateItemId,
                                              itemViewBuilder: itemViewBuilder)
@@ -46,6 +52,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                                   isParentSelected: false,
                                                   selections: .constant(.init()),
                                                   dragY: nil,
+                                                  yOffsetDragHack: .zero,
                                                   sidebarItemDragged: .constant(nil),
                                                   dragCandidateItemId: .constant(nil),
                                                  itemViewBuilder: itemViewBuilder)
@@ -53,7 +60,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                         
                         // Overlay is off by about 30 pixels
                         .padding(.leading, 30)
-                        .offset(y: dragY - 30)
+                        .offset(y: dragY)
                         .disabled(true)
                         
                         Spacer()
@@ -61,9 +68,9 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                     .border(.green)
                 }
             }
+            .modifier(ItemGestureModifier(dragY: $dragY))
         }
         .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
-        .modifier(ItemGestureModifier(dragY: $dragY))
         .animation(.easeInOut, value: self.data)
         .onChange(of: self.dragCandidateItemId) {
             guard let sidebarItemDragged = self.sidebarItemDragged,

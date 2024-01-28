@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Elliot Boschwitz on 1/26/24.
 //
@@ -17,6 +17,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     let isParentSelected: Bool
     @Binding var selections: Set<Data.ID>
     let dragY: CGFloat?
+    let yOffsetDragHack: CGFloat
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
     @ViewBuilder var itemViewBuilder: (Data) -> RowContent
@@ -31,7 +32,8 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
             .modifier(DragIndexReader(item: item,
                                       sidebarItemDragged: $sidebarItemDragged,
                                       dragCandidateItemId: $dragCandidateItemId,
-                                      dragY: dragY))
+                                      dragY: dragY,
+                                      yOffsetDragHack: yOffsetDragHack))
 
             if let children = item.children {
                 ForEach(children) { itemChild in
@@ -39,6 +41,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                                     isParentSelected: self.isSelected,
                                     selections: $selections,
                                     dragY: dragY,
+                                    yOffsetDragHack: yOffsetDragHack,
                                     sidebarItemDragged: $sidebarItemDragged,
                                     dragCandidateItemId: $dragCandidateItemId,
                                              itemViewBuilder: itemViewBuilder)
