@@ -11,6 +11,8 @@ import SwiftUI
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
+    @Environment(\.editMode) private var editMode
+    
     @State private var dragY: CGFloat? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
@@ -30,12 +32,22 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
         self.yOffsetDragHack = yOffsetDragHack
         self.itemViewBuilder = itemViewBuilder
     }
+
+    var isEditing: Bool {
+        self.editMode?.wrappedValue == EditMode.active
+    }
+    
+    /// We pass in an empty object when editing is disabled to prevent the sidebar from  updating the navigation stack
+    var activeSelections: Binding<Set<Data.ID>> {
+        self.isEditing ? self.$selections : .constant(.init())
+    }
     
     public var body: some View {
         ZStack {
             List($data,
                  editActions: .all,
-                 selection: $selections) { item in
+                 selection: activeSelections)
+            { item in
                 StitchNestedListItemView(item: item.wrappedValue,
                                              isParentSelected: false,
                                              selections: $selections,
