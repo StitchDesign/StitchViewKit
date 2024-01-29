@@ -11,29 +11,32 @@ import SwiftUI
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
-    @State private var selections = Set<Data.ID>()
     @State private var dragY: CGFloat? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
     
     @Binding var data: [Data]
+    @Binding var selections: Set<Data.ID>
     /// Item locations fail to use named coordinate space, hack offers a temporary workaround
     let yOffsetDragHack: CGFloat
     @ViewBuilder var itemViewBuilder: (Data) -> RowContent
     
     public init(data: Binding<[Data]>,
-    yOffsetDragHack: CGFloat
-     itemViewBuilder: @escaping (Data) -> RowContent) {
+                selections: Binding<Set<Data.ID>>,
+                yOffsetDragHack: CGFloat,
+                itemViewBuilder: @escaping (Data) -> RowContent) {
         self._data = data
+        self._selections = selections
         self.yOffsetDragHack = yOffsetDragHack
         self.itemViewBuilder = itemViewBuilder
     }
     
     public var body: some View {
         ZStack {
-            List {
-                ForEach(data) { item in
-                    StitchNestedListItemView(item: item,
+            List($data,
+                 editActions: .all,
+                 selection: $selections) { item in
+                StitchNestedListItemView(item: item.wrappedValue,
                                              isParentSelected: false,
                                              selections: $selections,
                                              dragY: dragY,
@@ -41,7 +44,6 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              sidebarItemDragged: self.$sidebarItemDragged,
                                              dragCandidateItemId: self.$dragCandidateItemId,
                                              itemViewBuilder: itemViewBuilder)
-                }
             }
             .disabled(sidebarItemDragged != nil)
             .overlay {
@@ -49,12 +51,12 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                    let dragY = dragY {
                     VStack {
                         StitchNestedListItemView(item: draggedItem,
-                                                  isParentSelected: false,
-                                                  selections: .constant(.init()),
-                                                  dragY: nil,
-                                                  yOffsetDragHack: .zero,
-                                                  sidebarItemDragged: .constant(nil),
-                                                  dragCandidateItemId: .constant(nil),
+                                                 isParentSelected: false,
+                                                 selections: .constant(.init()),
+                                                 dragY: nil,
+                                                 yOffsetDragHack: .zero,
+                                                 sidebarItemDragged: .constant(nil),
+                                                 dragCandidateItemId: .constant(nil),
                                                  itemViewBuilder: itemViewBuilder)
                         .transition(.opacity)
                         
