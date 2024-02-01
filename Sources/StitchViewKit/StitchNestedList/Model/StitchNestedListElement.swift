@@ -79,7 +79,7 @@ extension Array where Element: StitchNestedListElement {
     
     public func get(_ id: Element.ID) -> Element? {
         for item in self {
-            if item.id == id {
+            if item.id == item.id {
                 return item
             }
             

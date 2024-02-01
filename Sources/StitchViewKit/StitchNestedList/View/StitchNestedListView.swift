@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
+let STITCHNESTEDLIST_ROW_PADDING: CGFloat = 8
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
     @State private var dragY: CGFloat? = .zero
@@ -42,8 +43,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     public var body: some View {
         ZStack {
             List($data,
-                 editActions: .all)
-            { item in
+                 editActions: .delete) { item in
                 StitchNestedListItemView(item: item.wrappedValue,
                                          isEditing: isEditing,
                                          isParentSelected: false,
@@ -53,6 +53,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                          sidebarItemDragged: self.$sidebarItemDragged,
                                          dragCandidateItemId: self.$dragCandidateItemId,
                                          itemViewBuilder: itemViewBuilder)
+                .padding(.vertical, STITCHNESTEDLIST_ROW_PADDING)
             }
             .disabled(sidebarItemDragged != nil)
             .overlay {
@@ -69,14 +70,16 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                                  dragCandidateItemId: .constant(nil),
                                                  itemViewBuilder: itemViewBuilder)
                         .transition(.opacity)
+                        .padding(STITCHNESTEDLIST_ROW_PADDING)
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(8)
                         
-                        // Overlay is off by about 30 pixels
-                        .padding(.leading, 30)
                         .offset(y: dragY)
                         .disabled(true)
                         
                         Spacer()
                     }
+                    .padding(.horizontal)
                 }
             }
             .modifier(ItemGestureModifier(dragY: $dragY))
