@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Elliot Boschwitz on 1/26/24.
 //
@@ -29,10 +29,17 @@ extension Array where Element: StitchNestedListElement {
     
     /// Places an element after the location of some ID.
     /// If `elementWithId` is nil we insert in begginging
-    mutating func insert(_ data: Element, after elementWithId: Element.ID?) {
+    mutating func insert(_ data: Element,
+                         after elementWithId: Element.ID?) {
+        let _ = self.insert(data, after: elementWithId, isRootLevel: true)
+    }
+    
+    private mutating func insert(_ data: Element,
+                         after elementWithId: Element.ID?,
+                                 isRootLevel: Bool) -> Bool {
         guard let elementWithId = elementWithId else {
             self.insert(data, at: 0)
-            return
+            return true
         }
 
         for (index, item) in self.enumerated() {
@@ -48,12 +55,25 @@ extension Array where Element: StitchNestedListElement {
                 }
                 
                 // Exit recursion on success
-                return
+                return true
             }
             
-            // Recursively check children
-            item.children?.insert(data, after: elementWithId)
-            self[index] = item
+            // Recursively check children, if result is true then we've found the element
+            if item.children?.insert(data,
+                                     after: elementWithId,
+                                     isRootLevel: false) ?? false {
+                self[index] = item
+                return true
+            }
+        }
+        
+        // Insert at end if no match
+        if isRootLevel {
+            self.append(data)
+            return true
+        } else {
+            // No match found at nested level
+            return false
         }
     }
     
