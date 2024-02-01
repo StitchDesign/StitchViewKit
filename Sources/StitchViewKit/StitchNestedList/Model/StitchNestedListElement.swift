@@ -35,7 +35,7 @@ extension Array where Element: StitchNestedListElement {
             return
         }
 
-        for (index, item) in self.enumerated() {            
+        for (index, item) in self.enumerated() {
             var item = item
             
             // Insert here if matching case
@@ -79,7 +79,7 @@ extension Array where Element: StitchNestedListElement {
     
     public func get(_ id: Element.ID) -> Element? {
         for item in self {
-            if item.id == item.id {
+            if item.id == id {
                 return item
             }
             
