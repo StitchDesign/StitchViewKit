@@ -9,61 +9,82 @@ import Foundation
 import SwiftUI
 
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
+let SWIPE_FULL_CORNER_RADIUS = 8
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
-    @State private var selections = Set<Data.ID>()
     @State private var dragY: CGFloat? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
     
     @Binding var data: [Data]
-    @ViewBuilder var itemViewBuilder: (Data) -> RowContent
+    @Binding var selections: Set<Data.ID>
+    let isEditing: Bool
+    /// Item locations fail to use named coordinate space, hack offers a temporary workaround
+    let yOffsetDragHack: CGFloat
+    @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
     
-    public init(data: Binding<[Data]>, itemViewBuilder: @escaping (Data) -> RowContent) {
+    public init(data: Binding<[Data]>,
+                selections: Binding<Set<Data.ID>>,
+                isEditing: Bool,
+                yOffsetDragHack: CGFloat,
+                itemViewBuilder: @escaping (Data, Bool) -> RowContent) {
         self._data = data
+        self._selections = selections
+        self.isEditing = isEditing
+        self.yOffsetDragHack = yOffsetDragHack
         self.itemViewBuilder = itemViewBuilder
     }
     
+    /// We pass in an empty object when editing is disabled to prevent the sidebar from  updating the navigation stack
+    var activeSelections: Binding<Set<Data.ID>> {
+        self.isEditing ? self.$selections : .constant(.init())
+    }
+    
+    var lastElementId: Data.ID? {
+        self.data.flattenedItems.last?.id
+    }
+    
     public var body: some View {
-        ZStack {
-            List {
-                ForEach(data) { item in
-                    StitchNestedListItemView(item: item,
-                                             isParentSelected: false,
-                                             selections: $selections,
-                                             dragY: dragY,
-                                             sidebarItemDragged: self.$sidebarItemDragged,
-                                             dragCandidateItemId: self.$dragCandidateItemId,
-                                             itemViewBuilder: itemViewBuilder)
-                }
+        ZStack(alignment: .topLeading) {
+            List($data,
+                 editActions: .delete) { item in
+                StitchNestedListItemView(item: item.wrappedValue,
+                                         isEditing: isEditing,
+                                         isParentSelected: false,
+                                         selections: $selections,
+                                         dragY: dragY,
+                                         yOffsetDragHack: self.yOffsetDragHack,
+                                         sidebarItemDragged: self.$sidebarItemDragged,
+                                         dragCandidateItemId: self.$dragCandidateItemId,
+                                         lastElementId: lastElementId,
+                                         itemViewBuilder: itemViewBuilder)
             }
             .disabled(sidebarItemDragged != nil)
-            .overlay {
-                if let draggedItem = self.sidebarItemDragged,
-                   let dragY = dragY {
-                    VStack {
-                        StitchNestedListItemView(item: draggedItem,
-                                                  isParentSelected: false,
-                                                  selections: .constant(.init()),
-                                                  dragY: nil,
-                                                  sidebarItemDragged: .constant(nil),
-                                                  dragCandidateItemId: .constant(nil),
-                                                 itemViewBuilder: itemViewBuilder)
-                        .transition(.opacity)
-                        
-                        // Overlay is off by about 30 pixels
-                        .padding(.leading, 30)
-                        .offset(y: dragY - 30)
-                        .disabled(true)
-                        
-                        Spacer()
-                    }
-                    .border(.green)
+            .modifier(ItemGestureModifier(dragY: $dragY))
+            if let draggedItem = self.sidebarItemDragged,
+               let dragY = dragY {
+                VStack(spacing: .zero) {
+                    StitchNestedListItemView(item: draggedItem,
+                                             isEditing: false,
+                                             isParentSelected: false,
+                                             selections: .constant(.init()),
+                                             dragY: nil,
+                                             yOffsetDragHack: .zero,
+                                             sidebarItemDragged: .constant(nil),
+                                             dragCandidateItemId: .constant(nil),
+                                             lastElementId: nil,
+                                             itemViewBuilder: itemViewBuilder)
+                    .transition(.opacity)
+                    .padding(.horizontal)
                 }
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .cornerRadius(8)
+                .offset(y: dragY)
+                .disabled(true)
             }
         }
         .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
-        .modifier(ItemGestureModifier(dragY: $dragY))
         .animation(.easeInOut, value: self.data)
         .onChange(of: self.dragCandidateItemId) {
             guard let sidebarItemDragged = self.sidebarItemDragged,
@@ -73,13 +94,17 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
             }
             
             // Add item back to list at last tracked index
-            if let item = self.sidebarItemDragged,
-               let dragCandidateItemId = self.dragCandidateItemId {
+            if let item = self.sidebarItemDragged {
                 // Remove item from old location
                 self.data.remove(sidebarItemDragged.id)
                 
                 // Determines index at hierarchical data
-                self.data.insert(item, after: dragCandidateItemId)
+                if let dragCandidateItemId = self.dragCandidateItemId {
+                    self.data.insert(item, after: dragCandidateItemId)
+                } else {
+                    // If dragged candidate is nil then we dragged past last item
+                    self.data.append(item)
+                }
             } else {
                 print("StitchNestedViewList error: unable to find location on drag.")
             }
