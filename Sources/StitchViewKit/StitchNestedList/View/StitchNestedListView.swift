@@ -40,6 +40,10 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
         self.isEditing ? self.$selections : .constant(.init())
     }
     
+    var lastElementId: Data.ID? {
+        self.data.flattenedItems.last?.id
+    }
+    
     public var body: some View {
         ZStack(alignment: .topLeading) {
             List($data,
@@ -52,6 +56,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                          yOffsetDragHack: self.yOffsetDragHack,
                                          sidebarItemDragged: self.$sidebarItemDragged,
                                          dragCandidateItemId: self.$dragCandidateItemId,
+                                         lastElementId: lastElementId,
                                          itemViewBuilder: itemViewBuilder)
             }
             .disabled(sidebarItemDragged != nil)
@@ -67,6 +72,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              yOffsetDragHack: .zero,
                                              sidebarItemDragged: .constant(nil),
                                              dragCandidateItemId: .constant(nil),
+                                             lastElementId: nil,
                                              itemViewBuilder: itemViewBuilder)
                     .transition(.opacity)
                     .padding(.horizontal)
@@ -88,13 +94,17 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
             }
             
             // Add item back to list at last tracked index
-            if let item = self.sidebarItemDragged,
-               let dragCandidateItemId = self.dragCandidateItemId {
+            if let item = self.sidebarItemDragged {
                 // Remove item from old location
                 self.data.remove(sidebarItemDragged.id)
                 
                 // Determines index at hierarchical data
-                self.data.insert(item, after: dragCandidateItemId)
+                if let dragCandidateItemId = self.dragCandidateItemId {
+                    self.data.insert(item, after: dragCandidateItemId)
+                } else {
+                    // If dragged candidate is nil then we dragged past last item
+                    self.data.append(item)
+                }
             } else {
                 print("StitchNestedViewList error: unable to find location on drag.")
             }

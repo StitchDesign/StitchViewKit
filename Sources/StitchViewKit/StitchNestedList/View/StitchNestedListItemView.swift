@@ -19,6 +19,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     let yOffsetDragHack: CGFloat
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
+    let lastElementId: Data.ID?
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
     
     var isDragging: Bool {
@@ -28,6 +29,10 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     var isSelected: Bool {
         self.selections.contains(item.id)
     }
+    
+    var isLastElement: Bool {
+        item.id == lastElementId
+    }
 
     var body: some View {
         Group {
@@ -36,7 +41,8 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                                       sidebarItemDragged: $sidebarItemDragged,
                                       dragCandidateItemId: $dragCandidateItemId,
                                       dragY: dragY,
-                                      yOffsetDragHack: yOffsetDragHack))
+                                      yOffsetDragHack: yOffsetDragHack,
+                                      isLastElement: isLastElement))
 
             if let children = item.children {
                 ForEach(children) { itemChild in
@@ -48,6 +54,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                                     yOffsetDragHack: yOffsetDragHack,
                                     sidebarItemDragged: $sidebarItemDragged,
                                     dragCandidateItemId: $dragCandidateItemId,
+                                             lastElementId: lastElementId,
                                              itemViewBuilder: itemViewBuilder)
                 }
                 .padding(.leading, 40)
