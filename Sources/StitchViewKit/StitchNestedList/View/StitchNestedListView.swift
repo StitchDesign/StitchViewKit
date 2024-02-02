@@ -76,8 +76,8 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              itemViewBuilder: itemViewBuilder)
                     .transition(.opacity)
                     .padding(.horizontal)
-                    .padding(.vertical, 8)
                 }
+                .padding(.vertical, 4)
                 .background(.ultraThinMaterial)
                 .cornerRadius(8)
                 .offset(y: dragY)
