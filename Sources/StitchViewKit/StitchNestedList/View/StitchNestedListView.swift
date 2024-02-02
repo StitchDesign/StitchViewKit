@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
-let STITCHNESTEDLIST_ROW_PADDING: CGFloat = 8
+let SWIPE_FULL_CORNER_RADIUS = 8
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
     @State private var dragY: CGFloat? = .zero
@@ -41,7 +41,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     }
     
     public var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             List($data,
                  editActions: .delete) { item in
                 StitchNestedListItemView(item: item.wrappedValue,
@@ -53,36 +53,30 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                          sidebarItemDragged: self.$sidebarItemDragged,
                                          dragCandidateItemId: self.$dragCandidateItemId,
                                          itemViewBuilder: itemViewBuilder)
-                .padding(.vertical, STITCHNESTEDLIST_ROW_PADDING)
             }
             .disabled(sidebarItemDragged != nil)
-            .overlay {
-                if let draggedItem = self.sidebarItemDragged,
-                   let dragY = dragY {
-                    VStack {
-                        StitchNestedListItemView(item: draggedItem,
-                                                 isEditing: false,
-                                                 isParentSelected: false,
-                                                 selections: .constant(.init()),
-                                                 dragY: nil,
-                                                 yOffsetDragHack: .zero,
-                                                 sidebarItemDragged: .constant(nil),
-                                                 dragCandidateItemId: .constant(nil),
-                                                 itemViewBuilder: itemViewBuilder)
-                        .transition(.opacity)
-                        .padding(STITCHNESTEDLIST_ROW_PADDING)
-                        .background(.ultraThinMaterial)
-                        .cornerRadius(8)
-                        
-                        .offset(y: dragY)
-                        .disabled(true)
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                }
-            }
             .modifier(ItemGestureModifier(dragY: $dragY))
+            if let draggedItem = self.sidebarItemDragged,
+               let dragY = dragY {
+                VStack(spacing: .zero) {
+                    StitchNestedListItemView(item: draggedItem,
+                                             isEditing: false,
+                                             isParentSelected: false,
+                                             selections: .constant(.init()),
+                                             dragY: nil,
+                                             yOffsetDragHack: .zero,
+                                             sidebarItemDragged: .constant(nil),
+                                             dragCandidateItemId: .constant(nil),
+                                             itemViewBuilder: itemViewBuilder)
+                    .transition(.opacity)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                }
+                .background(.ultraThinMaterial)
+                .cornerRadius(8)
+                .offset(y: dragY)
+                .disabled(true)
+            }
         }
         .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
         .animation(.easeInOut, value: self.data)
