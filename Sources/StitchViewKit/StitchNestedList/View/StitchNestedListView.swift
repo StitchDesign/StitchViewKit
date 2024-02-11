@@ -59,6 +59,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                          lastElementId: lastElementId,
                                          itemViewBuilder: itemViewBuilder)
             }
+            // MARK: disable for now, see if necessary
 //            .scrollDisabled(dragY != nil)
             .modifier(ItemGestureModifier(dragY: $dragY))
             if let draggedItem = self.sidebarItemDragged,

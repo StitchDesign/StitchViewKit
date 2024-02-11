@@ -94,7 +94,7 @@ struct ItemGestureModifier: ViewModifier {
                 self.dragY = self.dragState.yPosition
             }
 #else
-            .simultaneousGesture(
+            .gesture(
                 dragGesture
             )
 #endif
