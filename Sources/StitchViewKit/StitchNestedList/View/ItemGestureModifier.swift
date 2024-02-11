@@ -11,7 +11,7 @@ import SwiftUI
 struct ItemGestureModifier: ViewModifier {
     @Binding var dragY: CGFloat?
     
-#if !os(macOS)
+#if !targetEnvironment(macCatalyst)
     @GestureState private var dragState = DragState.inactive
     
     enum DragState {
@@ -19,10 +19,10 @@ struct ItemGestureModifier: ViewModifier {
         case pressing
         case dragging(yPosition: CGFloat)
         
-        var yPosition: CGFloat {
+        var yPosition: CGFloat? {
             switch self {
             case .inactive, .pressing:
-                return .zero
+                return nil
             case .dragging(let yPosition):
                 return yPosition
             }
@@ -49,16 +49,11 @@ struct ItemGestureModifier: ViewModifier {
     
     var longPress: some Gesture {
         LongPressGesture(minimumDuration: 0.5)
-            .sequenced(before: DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
-                .onEnded { _ in
-                    print("just testing")
-                }
-                                          )
+            .sequenced(before: DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE)))
             .updating($dragState) { value, state, transaction in
                 switch value {
                     // Long press begins.
                 case .first(true):
-                    print("first")
                     state = .pressing
                     
                     // Long press confirmed, dragging may begin.
@@ -71,21 +66,17 @@ struct ItemGestureModifier: ViewModifier {
                 default:
                     state = .inactive
                     self.dragY = nil
-                    print("inactive")
                 }
             }
             .onEnded { finished in
                 self.dragY = nil
-                print("ended")
             }
     }
     #else
     var dragGesture: some Gesture {
         DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
             .onChanged { gesture in
-                if self.dragState.isActive {
-                    self.dragY = gesture.location.y
-                }
+                self.dragY = gesture.location.y
             }
             .onEnded { _ in
                 self.dragY = nil
@@ -95,7 +86,7 @@ struct ItemGestureModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-#if !os(macOS)
+#if !targetEnvironment(macCatalyst)
             .gesture(
                 longPress
             )
