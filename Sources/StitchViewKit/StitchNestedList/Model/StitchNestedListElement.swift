@@ -10,15 +10,103 @@ import Foundation
 public protocol StitchNestedListElement: Identifiable, Equatable {
     var children: [Self]? { get set }
     init(id: Self.ID, children: [Self]?)
+    static func createId() -> Self.ID
 }
 
 extension StitchNestedListElement {
     var isGroup: Bool {
         self.children != nil
     }
+    
+    /// Recursively grabs all elements from self and children.
+    public var allElementIds: Set<Self.ID> {
+        let ids = Set([self.id])
+        guard let children = self.children else {
+            return ids
+        }
+        
+        let childrenIds = Set(children.flatMap { $0.allElementIds })
+        return ids.union(childrenIds)
+    }
+}
+
+enum GroupCandidate<Element: StitchNestedListElement> {
+    // Nil for root case
+    case valid(Element.ID?)
+    case invalid
+}
+
+extension GroupCandidate {
+    var isValidGroup: Bool {
+        switch self {
+        case .valid:
+            return true
+        case .invalid:
+            return false
+        }
+    }
+    
+    var parentId: Element.ID? {
+        switch self {
+        case .valid(let id):
+            return id
+        case .invalid:
+            return nil
+        }
+    }
 }
 
 extension Array where Element: StitchNestedListElement {
+    /// Returns `true` if selections meet the following criteria:
+    /// 1. All top-level selections are located in same hierarchy (contain the same parent)
+    /// 2. All top-level selections in turn have all of their children selected
+    func containsValidGroup(from selections: Set<Element.ID>,
+                            // Tracks the parent hierarchy of this candidate group, nil = root
+                            parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
+        // Invalid if data or selections are empty
+        guard !self.isEmpty && !selections.isEmpty else {
+            return .invalid
+        }
+        
+        // Keeps track of of what a valid selection set would look like given top-level selections,
+        // meaning if some children aren't selected it won't match this.
+        let validSelectedSet = self.reduce(into: Set<Element.ID>()) { result, element in
+            guard selections.contains(element.id) else {
+                return
+            }
+            
+            result = result.union(element.allElementIds)
+        }
+        
+        // Recursively check children if no selections found at this hierarachy
+        guard !validSelectedSet.isEmpty else {
+            let recursiveChecks = self.compactMap {
+                $0.children?.containsValidGroup(from: selections,
+                                                parentLayerGroupId: $0.id)
+            }
+            for result in recursiveChecks {
+                switch result {
+                case .invalid:
+                    continue
+                case .valid(let parentId):
+                    return .valid(parentId)
+                }
+            }
+            
+            return .invalid
+        }
+        
+        // Non-empty selections mean we've identified the highest hierarchy of selections, and
+        // therefore must match our valid selection set
+        guard validSelectedSet == selections else {
+            return .invalid
+        }
+            
+        // All elements are at same hierarchy so we can grab any element to get parent
+        let parentGroupId = self.first { selections.contains($0.id) }?.id
+        return .valid(parentGroupId)
+    }
+    
     var flattenedItems: [Element] {
         self.flatMap { item in
             var items = [item]
@@ -110,48 +198,55 @@ extension Array where Element: StitchNestedListElement {
         return nil
     }
     
-    /// The "highest" element ID actually returns the element before the highest. Used for creating groups when selections get deleted.
-    /// If nil, we translate this as meaning we return to beginning of list.
-    func findHighestElementId(amongst ids: Set<Element.ID>) -> Element.ID? {
-        var minElementId: Element.ID?
-        var minIndex = ids.count    // arbitrary max number at start
-        
-        // Flatten nested list to determine index
-        let flattenedItems = self.flattenedItems
-        
-        ids.forEach { id in
-            if let index = flattenedItems.firstIndex(where: { $0.id == id }) {
-                if index < minIndex {
-                    minIndex = index
-                    
-                    minElementId = flattenedItems[safe: index - 1]?.id
-                }
-            }
-        }
-        
-        return minElementId
+    /// Returns the lowest index amonst a list of selections. Nil result means none found.
+    private func findLowestIndex(amongst ids: Set<Element.ID>) -> Int? {
+        self.enumerated()
+            .filter { ids.contains($0.element.id) }
+            .min { $0.offset < $1.offset }?.offset
     }
     
     public mutating func createGroup(newGroupId: Element.ID,
+                                     parentLayerGroupId: Element.ID?,
                                      selections: Set<Element.ID>) {
+        let idsAtHierarchy: [Element.ID?] = self.map { $0.id }
+        let atCorrectHierarchy = parentLayerGroupId == nil || idsAtHierarchy.contains(parentLayerGroupId)
+        
+        // Recursively search children until we find the parent layer ID
+        guard atCorrectHierarchy,
+        // Find the selected element at the minimum index to determine location of new group node
+              let newGroupIndex = self.findLowestIndex(amongst: selections) else {
+            self = self.map { element in
+                var element = element
+                element.children?.createGroup(newGroupId: newGroupId,
+                                                    parentLayerGroupId: parentLayerGroupId,
+                                                    selections: selections)
+                return element
+            }
+            return
+        }
+        
         var newGroupData = Element(id: newGroupId, children: [])
         
-        // Find the selected element at the minimum index to determine location of new group node
-        let highestSelectedElement = self.findHighestElementId(amongst: selections)
-
         // Update selected nodes to report to new group node
-        selections.forEach { id in
+        self.enumerated()
+            .reversed() // avoids index out of bounds for multiple selections!
+            .forEach { index, element in
             // Get layer data from sidebar to add to group
-            if let childData = self.get(id) {
-                // Remove this element from list
-                self.remove(id)
-
-                // Re-add it to group
-                newGroupData.children?.append(childData)
+            guard selections.contains(element.id) else {
+                // Skip if not one of our selections
+                return
             }
+            // Remove this element from list
+            self.remove(at: index)
+            
+            // Re-add it to group
+            newGroupData.children?.append(element)
         }
 
+        // Re-reverse children since because of our previous reversed loop
+        newGroupData.children = newGroupData.children?.reversed()
+        
         // Add new group node to sidebar
-        self.insert(newGroupData, after: highestSelectedElement)
+        self.insert(newGroupData, at: newGroupIndex)
     }
 }

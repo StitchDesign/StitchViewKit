@@ -12,25 +12,24 @@ let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 let SWIPE_FULL_CORNER_RADIUS = 8
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
+    @Environment(\.editMode) var editMode
+    
     @State private var dragY: CGFloat? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
     
     @Binding var data: [Data]
     @Binding var selections: Set<Data.ID>
-    let isEditing: Bool
     /// Item locations fail to use named coordinate space, hack offers a temporary workaround
     let yOffsetDragHack: CGFloat
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
     
     public init(data: Binding<[Data]>,
                 selections: Binding<Set<Data.ID>>,
-                isEditing: Bool,
                 yOffsetDragHack: CGFloat,
                 itemViewBuilder: @escaping (Data, Bool) -> RowContent) {
         self._data = data
         self._selections = selections
-        self.isEditing = isEditing
         self.yOffsetDragHack = yOffsetDragHack
         self.itemViewBuilder = itemViewBuilder
     }
@@ -38,6 +37,10 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     /// We pass in an empty object when editing is disabled to prevent the sidebar from  updating the navigation stack
     var activeSelections: Binding<Set<Data.ID>> {
         self.isEditing ? self.$selections : .constant(.init())
+    }
+    
+    var isEditing: Bool {
+        self.editMode?.wrappedValue.isEditing ?? false
     }
     
     var lastElementId: Data.ID? {
@@ -87,6 +90,9 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
         }
         .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
         .animation(.easeInOut, value: self.data)
+        .onChange(of: self.isEditing) {
+            self.selections = .init()
+        }
         .onChange(of: self.dragCandidateItemId) {
             guard let sidebarItemDragged = self.sidebarItemDragged,
                   // do nothing if candidate location is same as current item
