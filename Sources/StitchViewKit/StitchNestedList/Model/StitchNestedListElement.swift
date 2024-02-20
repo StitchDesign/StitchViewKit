@@ -101,10 +101,51 @@ extension Array where Element: StitchNestedListElement {
         guard validSelectedSet == selections else {
             return .invalid
         }
-            
+        
         // All elements are at same hierarchy so we can grab any element to get parent
         let parentGroupId = self.first { selections.contains($0.id) }?.id
         return .valid(parentGroupId)
+    }
+    
+    /// Contains valid ungroup if selections exhaustively comprise of some group + children.
+    func containsValidUngroup(from selections: Set<Element.ID>,
+                              // Tracks the parent hierarchy of this candidate group, nil = root
+                              parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
+        // Recursively search until candidate group ID found.
+        for element in self {
+            if selections.contains(element.id) {
+                // Top item must be group
+                guard element.isGroup else {
+                    return .invalid
+                }
+                
+                // All items in group are selected if this ID + children equal selections
+                let allIdsInGroup = element.allElementIds
+                guard allIdsInGroup == selections else {
+                    return .invalid
+                }
+                
+                return .valid(element.id)
+            }
+            
+            // Recursively check children
+            switch element.children?
+                .containsValidUngroup(from: selections,
+                                      parentLayerGroupId: element.id) {
+            case .valid(let parentId):
+                guard let parentId = parentId else {
+                    // Not valid if parentId == nil, meaning the root
+                    return .invalid
+                }
+                return .valid(parentId)
+
+            default:
+                // Continue recursion
+                break
+            }
+        }
+        
+        return .invalid
     }
     
     var flattenedItems: [Element] {
@@ -123,13 +164,13 @@ extension Array where Element: StitchNestedListElement {
     }
     
     private mutating func insert(_ data: Element,
-                         after elementWithId: Element.ID?,
+                                 after elementWithId: Element.ID?,
                                  isRootLevel: Bool) -> Bool {
         guard let elementWithId = elementWithId else {
             self.insert(data, at: 0)
             return true
         }
-
+        
         for (index, item) in self.enumerated() {
             var item = item
             
@@ -206,8 +247,8 @@ extension Array where Element: StitchNestedListElement {
     }
     
     public func createGroup(newGroupId: Element.ID,
-                                     parentLayerGroupId: Element.ID?,
-                                     selections: Set<Element.ID>) -> Element? {
+                            parentLayerGroupId: Element.ID?,
+                            selections: Set<Element.ID>) -> Element? {
         let idsAtHierarchy: [Element.ID?] = self.map { $0.id }
         let atCorrectHierarchy = parentLayerGroupId == nil || idsAtHierarchy.contains(parentLayerGroupId)
         
@@ -227,24 +268,24 @@ extension Array where Element: StitchNestedListElement {
         self.enumerated()
             .reversed() // avoids index out of bounds for multiple selections!
             .forEach { index, element in
-            // Get layer data from sidebar to add to group
-            guard selections.contains(element.id) else {
-                // Skip if not one of our selections
-                return
+                // Get layer data from sidebar to add to group
+                guard selections.contains(element.id) else {
+                    // Skip if not one of our selections
+                    return
+                }
+                
+                // Re-add it to group
+                newGroupData.children?.append(element)
             }
-            
-            // Re-add it to group
-            newGroupData.children?.append(element)
-        }
-
+        
         // Re-reverse children since because of our previous reversed loop
         newGroupData.children = newGroupData.children?.reversed()
         
         return newGroupData
     }
     
-    public mutating func insertGroup(group: Element,
-                                     selections: Set<Element.ID>) {
+    mutating func insertGroup(group: Element,
+                              selections: Set<Element.ID>) {
         // Find the selected element at the minimum index to determine location of new group node
         // Recursively search until selections are found
         guard let newGroupIndex = self.findLowestIndex(amongst: selections) else {
@@ -264,5 +305,37 @@ extension Array where Element: StitchNestedListElement {
         
         // Add new group node to sidebar
         self.insert(group, at: newGroupIndex)
+    }
+    
+    func ungroup(selectedGroupId: Element.ID) -> [Element] {
+        self.flatMap { element -> [Element] in
+            var element = element
+            guard element.id == selectedGroupId else {
+                // Recursively search children
+                element.children = element.children?.ungroup(selectedGroupId: selectedGroupId)
+                return [element]
+            }
+            
+            // If match for selected group: remove group and add its children
+            return element.children ?? []
+        }
+    }
+    
+    /// Finds the parent element of some element ID.
+    func findParent(of elementId: Element.ID) -> Element? {
+        for element in self {
+            // Recursion base case--if children contain ID, return parent
+            if let children = element.children,
+               children.contains(where: { $0.id == elementId }) {
+                return element
+            }
+            
+            // Continue recursion
+            if let element = element.children?.findParent(of: elementId) {
+                return element
+            }
+        }
+        
+        return nil
     }
 }
