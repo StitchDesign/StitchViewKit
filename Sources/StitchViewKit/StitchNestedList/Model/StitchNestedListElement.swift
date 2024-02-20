@@ -205,24 +205,20 @@ extension Array where Element: StitchNestedListElement {
             .min { $0.offset < $1.offset }?.offset
     }
     
-    public mutating func createGroup(newGroupId: Element.ID,
+    public func createGroup(newGroupId: Element.ID,
                                      parentLayerGroupId: Element.ID?,
-                                     selections: Set<Element.ID>) {
+                                     selections: Set<Element.ID>) -> Element? {
         let idsAtHierarchy: [Element.ID?] = self.map { $0.id }
         let atCorrectHierarchy = parentLayerGroupId == nil || idsAtHierarchy.contains(parentLayerGroupId)
         
-        // Recursively search children until we find the parent layer ID
-        guard atCorrectHierarchy,
-        // Find the selected element at the minimum index to determine location of new group node
-              let newGroupIndex = self.findLowestIndex(amongst: selections) else {
-            self = self.map { element in
-                var element = element
+        guard atCorrectHierarchy else {
+            // Recursively search children until we find the parent layer ID
+            return self.compactMap { element in
                 element.children?.createGroup(newGroupId: newGroupId,
-                                                    parentLayerGroupId: parentLayerGroupId,
-                                                    selections: selections)
-                return element
+                                              parentLayerGroupId: parentLayerGroupId,
+                                              selections: selections)
             }
-            return
+            .first
         }
         
         var newGroupData = Element(id: newGroupId, children: [])
@@ -236,8 +232,6 @@ extension Array where Element: StitchNestedListElement {
                 // Skip if not one of our selections
                 return
             }
-            // Remove this element from list
-            self.remove(at: index)
             
             // Re-add it to group
             newGroupData.children?.append(element)
@@ -246,7 +240,29 @@ extension Array where Element: StitchNestedListElement {
         // Re-reverse children since because of our previous reversed loop
         newGroupData.children = newGroupData.children?.reversed()
         
+        return newGroupData
+    }
+    
+    public mutating func insertGroup(group: Element,
+                                     selections: Set<Element.ID>) {
+        // Find the selected element at the minimum index to determine location of new group node
+        // Recursively search until selections are found
+        guard let newGroupIndex = self.findLowestIndex(amongst: selections) else {
+            self = self.map { element in
+                var element = element
+                element.children?.insertGroup(group: group,
+                                              selections: selections)
+                return element
+            }
+            return
+        }
+        
+        // Remove selections from list
+        selections.forEach {
+            self.remove($0)
+        }
+        
         // Add new group node to sidebar
-        self.insert(newGroupData, at: newGroupIndex)
+        self.insert(group, at: newGroupIndex)
     }
 }

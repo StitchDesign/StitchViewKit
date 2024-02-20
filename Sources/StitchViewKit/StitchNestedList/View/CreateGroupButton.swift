@@ -13,13 +13,13 @@ public struct CreateGroupButton<Element: StitchNestedListElement,
     @Binding var data: [Element]
     @Binding var selections: Set<Element.ID>
     @Binding var editMode: EditMode
-    let groupCreatedCallback: (Element) -> ()
+    let groupCreatedCallback: ((Element) -> ())?
     @ViewBuilder var label: () -> LabelView
     
     public init(data: Binding<[Element]>,
                 selections: Binding<Set<Element.ID>>,
                 editMode: Binding<EditMode>,
-                groupCreatedCallback: @escaping (Element) -> (),
+                groupCreatedCallback: ((Element) -> ())? = nil,
                 label: @escaping () -> LabelView) {
         self._data = data
         self._selections = selections
@@ -35,21 +35,20 @@ public struct CreateGroupButton<Element: StitchNestedListElement,
     public var body: some View {
         Button {
             let newId = Element.createId()
-            self.data.createGroup(newGroupId: newId,
+
+            if let newGroup = self.data.createGroup(newGroupId: newId,
                                   parentLayerGroupId: groupResult.parentId,
-                                  selections: selections)
+                                  selections: selections) {
+                // Run the passed-in callback
+                self.groupCreatedCallback?(newGroup)
+                
+                // Insert new group in list
+                self.data.insertGroup(group: newGroup,
+                                      selections: selections)
+            }
             
             self.selections = .init()
             self.editMode = .inactive
-
-            guard let newGroupLayer = self.data.get(newId) else {
-                #if DEBUG
-                fatalError()
-                #endif
-                return
-            }
-            
-            self.groupCreatedCallback(newGroupLayer)
         } label: {
             label()
         }
