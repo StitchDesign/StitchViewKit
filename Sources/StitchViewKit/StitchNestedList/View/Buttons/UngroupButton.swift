@@ -41,11 +41,11 @@ public struct UngroupButton<Element: StitchNestedListElement,
     public var body: some View {
         Button {
             if let selectedGroupId = self.selectedGroupId {
-                // Run the passed-in callback
-                self.ungroupCallback?(selectedGroupId)
-
                 // Update data list
                 self.data = self.data.ungroup(selectedGroupId: selectedGroupId)
+                
+                // Run the passed-in callback
+                self.ungroupCallback?(selectedGroupId)
             }
             
             self.selections = .init()
