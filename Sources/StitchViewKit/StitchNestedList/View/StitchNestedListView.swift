@@ -10,11 +10,12 @@ import SwiftUI
 
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 let SWIPE_FULL_CORNER_RADIUS = 8
+let GROUP_INDENDATION: CGFloat = 40
 
 public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
     @Environment(\.editMode) var editMode
     
-    @State private var dragY: CGFloat? = .zero
+    @State private var dragPosition: CGPoint? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
     
@@ -55,7 +56,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                          isEditing: isEditing,
                                          isParentSelected: false,
                                          selections: $selections,
-                                         dragY: dragY,
+                                         dragPosition: dragPosition,
                                          yOffsetDragHack: self.yOffsetDragHack,
                                          sidebarItemDragged: self.$sidebarItemDragged,
                                          dragCandidateItemId: self.$dragCandidateItemId,
@@ -64,15 +65,15 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
             }
             // MARK: disable for now, see if necessary
 //            .scrollDisabled(dragY != nil)
-            .modifier(ItemGestureModifier(dragY: $dragY))
+            .modifier(ItemGestureModifier(dragPosition: $dragPosition))
             if let draggedItem = self.sidebarItemDragged,
-               let dragY = dragY {
+               let dragPosition = dragPosition {
                 VStack(spacing: .zero) {
                     StitchNestedListItemView(item: draggedItem,
                                              isEditing: false,
                                              isParentSelected: false,
                                              selections: .constant(.init()),
-                                             dragY: nil,
+                                             dragPosition: nil,
                                              yOffsetDragHack: .zero,
                                              sidebarItemDragged: .constant(nil),
                                              dragCandidateItemId: .constant(nil),
@@ -84,7 +85,7 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                 .padding(.vertical, 4)
                 .background(.ultraThinMaterial)
                 .cornerRadius(8)
-                .offset(y: dragY)
+                .offset(y: dragPosition.y)
                 .disabled(true)
             }
         }
