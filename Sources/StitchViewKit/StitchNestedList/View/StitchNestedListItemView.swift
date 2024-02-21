@@ -15,7 +15,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     let isEditing: Bool
     let isParentSelected: Bool
     @Binding var selections: Set<Data.ID>
-    let dragY: CGFloat?
+    let dragPosition: CGPoint?
     let yOffsetDragHack: CGFloat
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
@@ -40,7 +40,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
             .modifier(DragIndexReader(item: item,
                                       sidebarItemDragged: $sidebarItemDragged,
                                       dragCandidateItemId: $dragCandidateItemId,
-                                      dragY: dragY,
+                                      dragPosition: dragPosition,
                                       yOffsetDragHack: yOffsetDragHack,
                                       isLastElement: isLastElement))
 
@@ -50,14 +50,14 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                     isEditing: isEditing,
                                     isParentSelected: self.isSelected,
                                     selections: $selections,
-                                    dragY: dragY,
+                                    dragPosition: dragPosition,
                                     yOffsetDragHack: yOffsetDragHack,
                                     sidebarItemDragged: $sidebarItemDragged,
                                     dragCandidateItemId: $dragCandidateItemId,
                                              lastElementId: lastElementId,
                                              itemViewBuilder: itemViewBuilder)
                 }
-                .padding(.leading, 40)
+                .padding(.leading, GROUP_INDENDATION)
             }
         }
         // Hide items if dragging

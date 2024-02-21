@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 struct ItemGestureModifier: ViewModifier {
-    @Binding var dragY: CGFloat?
+    @Binding var dragPosition: CGPoint?
     
 #if !targetEnvironment(macCatalyst)
     @GestureState private var dragState = DragState.inactive
@@ -17,14 +17,14 @@ struct ItemGestureModifier: ViewModifier {
     enum DragState {
         case inactive
         case pressing
-        case dragging(yPosition: CGFloat)
+        case dragging(position: CGPoint)
         
-        var yPosition: CGFloat? {
+        var position: CGPoint? {
             switch self {
             case .inactive, .pressing:
                 return nil
-            case .dragging(let yPosition):
-                return yPosition
+            case .dragging(let position):
+                return position
             }
         }
         
@@ -58,8 +58,8 @@ struct ItemGestureModifier: ViewModifier {
                     
                     // Long press confirmed, dragging may begin.
                 case .second(true, let drag):
-                    if let newDragY = drag?.location.y {
-                        state = .dragging(yPosition: newDragY)
+                    if let newDrag = drag?.location {
+                        state = .dragging(position: newDrag)
                     }
                     
                     // Dragging ended or the long press cancelled.
@@ -76,10 +76,10 @@ struct ItemGestureModifier: ViewModifier {
     var dragGesture: some Gesture {
         DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
             .onChanged { gesture in
-                self.dragY = gesture.location.y
+                self.dragPosition = gesture.location
             }
             .onEnded { _ in
-                self.dragY = nil
+                self.dragPosition = nil
             }
     }
 #endif
