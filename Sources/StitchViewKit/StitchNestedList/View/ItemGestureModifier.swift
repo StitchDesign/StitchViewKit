@@ -65,11 +65,11 @@ struct ItemGestureModifier: ViewModifier {
                     // Dragging ended or the long press cancelled.
                 default:
                     state = .inactive
-                    self.dragY = nil
+                    self.dragPosition = nil
                 }
             }
             .onEnded { finished in
-                self.dragY = nil
+                self.dragPosition = nil
             }
     }
     #else
@@ -90,8 +90,8 @@ struct ItemGestureModifier: ViewModifier {
             .gesture(
                 longPress
             )
-            .onChange(of: self.dragState.yPosition) {
-                self.dragY = self.dragState.yPosition
+            .onChange(of: self.dragState.position) {
+                self.dragPosition = self.dragState.position
             }
 #else
             .gesture(
