@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftUI
-import SwipeActions
 
 struct StitchNestedListItemView<Data: StitchNestedListElement,
                                 RowContent: View>: View {
@@ -35,13 +34,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
 
     var body: some View {
         Group {
-            SwipeView {
-                itemViewBuilder(item, isSelected)
-            } trailingActions: { context in
-                SwipeAction(systemImage: "trash") {
-                    print("hi")
-                }
-            }
+            itemViewBuilder(item, isSelected)
             .modifier(DragIndexReader(item: item,
                                       sidebarItemDragged: $sidebarItemDragged,
                                       dragCandidateItemId: $dragCandidateItemId,

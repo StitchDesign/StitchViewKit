@@ -12,7 +12,7 @@ let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 let SWIPE_FULL_CORNER_RADIUS = 8
 let GROUP_INDENDATION: CGFloat = 40
 
-public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View, TrailingActions: View>: View {
+public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
     @Environment(\.editMode) var editMode
     
     @State private var dragPosition: CGPoint? = .zero
@@ -23,16 +23,13 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View, 
     @Binding var selections: Set<Data.ID>
     
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
-    @ViewBuilder var trailingActions: () -> TrailingActions
     
     public init(data: Binding<[Data]>,
                 selections: Binding<Set<Data.ID>>,
-                itemViewBuilder: @escaping (Data, Bool) -> RowContent,
-                trailingActions: @escaping () -> TrailingActions) {
+                itemViewBuilder: @escaping (Data, Bool) -> RowContent) {
         self._data = data
         self._selections = selections
         self.itemViewBuilder = itemViewBuilder
-        self.trailingActions = trailingActions
     }
     
     /// We pass in an empty object when editing is disabled to prevent the sidebar from  updating the navigation stack
