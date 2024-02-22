@@ -101,11 +101,12 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
             itemViewBuilder(item, isSelected)
             Spacer()
         }
-            .modifier(DragIndexReader(item: item,
-                                      sidebarItemDragged: $sidebarItemDragged,
-                                      dragCandidateItemId: $dragCandidateItemId,
-                                      dragPosition: dragPosition,
-                                      isLastElement: isLastElement))
+        .contentShape(Rectangle()) // fixes gesture targets
+        .modifier(DragIndexReader(item: item,
+                                  sidebarItemDragged: $sidebarItemDragged,
+                                  dragCandidateItemId: $dragCandidateItemId,
+                                  dragPosition: dragPosition,
+                                  isLastElement: isLastElement))
     }
 }
 
