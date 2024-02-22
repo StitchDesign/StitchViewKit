@@ -12,7 +12,7 @@ let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 let SWIPE_FULL_CORNER_RADIUS = 8
 let GROUP_INDENDATION: CGFloat = 40
 
-public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
+public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View, TrailingActions: View>: View {
     @Environment(\.editMode) var editMode
     
     @State private var dragPosition: CGPoint? = .zero
@@ -21,18 +21,18 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     
     @Binding var data: [Data]
     @Binding var selections: Set<Data.ID>
-    /// Item locations fail to use named coordinate space, hack offers a temporary workaround
-    let yOffsetDragHack: CGFloat
+    
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
+    @ViewBuilder var trailingActions: () -> TrailingActions
     
     public init(data: Binding<[Data]>,
                 selections: Binding<Set<Data.ID>>,
-                yOffsetDragHack: CGFloat,
-                itemViewBuilder: @escaping (Data, Bool) -> RowContent) {
+                itemViewBuilder: @escaping (Data, Bool) -> RowContent,
+                trailingActions: @escaping () -> TrailingActions) {
         self._data = data
         self._selections = selections
-        self.yOffsetDragHack = yOffsetDragHack
         self.itemViewBuilder = itemViewBuilder
+        self.trailingActions = trailingActions
     }
     
     /// We pass in an empty object when editing is disabled to prevent the sidebar from  updating the navigation stack
@@ -50,6 +50,8 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     
     public var body: some View {
         ZStack(alignment: .topLeading) {
+            // Scroll view used due to issues getting coordinateSpace to work
+            // with list
             ScrollView(.vertical) {
                 ForEach($data) { item in
                     StitchNestedListItemView(item: item.wrappedValue,
@@ -57,7 +59,6 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              isParentSelected: false,
                                              selections: $selections,
                                              dragPosition: dragPosition,
-                                             yOffsetDragHack: self.yOffsetDragHack,
                                              sidebarItemDragged: self.$sidebarItemDragged,
                                              dragCandidateItemId: self.$dragCandidateItemId,
                                              lastElementId: lastElementId,
@@ -76,7 +77,6 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              isParentSelected: false,
                                              selections: .constant(.init()),
                                              dragPosition: nil,
-                                             yOffsetDragHack: .zero,
                                              sidebarItemDragged: .constant(nil),
                                              dragCandidateItemId: .constant(nil),
                                              lastElementId: nil,

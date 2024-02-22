@@ -7,7 +7,7 @@
 
 import Foundation
 import SwiftUI
-
+import SwipeActions
 
 struct StitchNestedListItemView<Data: StitchNestedListElement,
                                 RowContent: View>: View {
@@ -16,7 +16,6 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     let isParentSelected: Bool
     @Binding var selections: Set<Data.ID>
     let dragPosition: CGPoint?
-    let yOffsetDragHack: CGFloat
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
     let lastElementId: Data.ID?
@@ -36,12 +35,17 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
 
     var body: some View {
         Group {
-            itemViewBuilder(item, isSelected)
+            SwipeView {
+                itemViewBuilder(item, isSelected)
+            } trailingActions: { context in
+                SwipeAction(systemImage: "trash") {
+                    print("hi")
+                }
+            }
             .modifier(DragIndexReader(item: item,
                                       sidebarItemDragged: $sidebarItemDragged,
                                       dragCandidateItemId: $dragCandidateItemId,
                                       dragPosition: dragPosition,
-                                      yOffsetDragHack: yOffsetDragHack,
                                       isLastElement: isLastElement))
 
             if let children = item.children {
@@ -51,7 +55,6 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                                     isParentSelected: self.isSelected,
                                     selections: $selections,
                                     dragPosition: dragPosition,
-                                    yOffsetDragHack: yOffsetDragHack,
                                     sidebarItemDragged: $sidebarItemDragged,
                                     dragCandidateItemId: $dragCandidateItemId,
                                              lastElementId: lastElementId,

@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "swipeactions",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vpl-codesign/SwipeActions.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "3045aa1a3332ae222493d6799ad426e029cd0dcb"
+      }
+    }
+  ],
+  "version" : 2
+}
