@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ItemGestureModifier: ViewModifier {
     @Binding var dragPosition: CGPoint?
+    let isSlideMenuOpen: Bool
     let isEditing: Bool
     
     @GestureState private var dragState = DragState.inactive
@@ -83,15 +84,24 @@ struct ItemGestureModifier: ViewModifier {
             }
     }
     
+    var enableLongPress: Bool {
+        !isEditing && !isSlideMenuOpen
+    }
+    
     func body(content: Content) -> some View {
         content
+#if !targetEnvironment(macCatalyst)
+            .gesture(longPress)
+        #else
+        // high pri needed for enable long press here
             .highPriorityGesture(
-                isEditing ?  dragGesture : nil
+                isEditing ? dragGesture : nil
             )
             .highPriorityGesture(
                 // Long press is only for when we're not editing
-                !isEditing ? longPress : nil
+                enableLongPress ? longPress : nil
             )
+        #endif
             .onChange(of: self.dragState.position) {
                 self.dragPosition = self.dragState.position
             }

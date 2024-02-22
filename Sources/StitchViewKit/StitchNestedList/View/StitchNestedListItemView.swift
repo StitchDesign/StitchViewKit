@@ -19,6 +19,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     let dragPosition: CGPoint?
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
+    @Binding var isSlideMenuOpen: Bool
     let lastElementId: Data.ID?
     var onSelection: ((Data) -> Void)?
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
@@ -49,6 +50,7 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                                              dragPosition: dragPosition,
                                              sidebarItemDragged: $sidebarItemDragged,
                                              dragCandidateItemId: $dragCandidateItemId,
+                                             isSlideMenuOpen: $isSlideMenuOpen,
                                              lastElementId: lastElementId,
                                              onSelection: onSelection,
                                              itemViewBuilder: itemViewBuilder,
@@ -86,12 +88,14 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                     .onTapGesture {
                         onSelection?(item)
                     }
-            } trailingActions: { _ in
+            } trailingActions: { context in
                 trailingActions(item)
+                    .onChange(of: context.state.wrappedValue, initial: true) {
+                        self.isSlideMenuOpen = context.state.wrappedValue == .expanded
+                    }
             }
             .swipeActionCornerRadius(8)
             .swipeActionsMaskCornerRadius(8)
-            
         }
     }
     
@@ -102,11 +106,11 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
             Spacer()
         }
         .contentShape(Rectangle()) // fixes gesture targets
-        .modifier(DragIndexReader(item: item,
-                                  sidebarItemDragged: $sidebarItemDragged,
-                                  dragCandidateItemId: $dragCandidateItemId,
-                                  dragPosition: dragPosition,
-                                  isLastElement: isLastElement))
+            .modifier(DragIndexReader(item: item,
+                                      sidebarItemDragged: $sidebarItemDragged,
+                                      dragCandidateItemId: $dragCandidateItemId,
+                                      dragPosition: dragPosition,
+                                      isLastElement: isLastElement))
     }
 }
 

@@ -19,6 +19,7 @@ public struct StitchNestedList<Data: StitchNestedListElement,
     @State private var dragPosition: CGPoint? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
+    @State private var isSlideMenuOpen = false
     
     @Binding var data: [Data]
     @Binding var selections: Set<Data.ID>
@@ -64,16 +65,20 @@ public struct StitchNestedList<Data: StitchNestedListElement,
                                              dragPosition: dragPosition,
                                              sidebarItemDragged: self.$sidebarItemDragged,
                                              dragCandidateItemId: self.$dragCandidateItemId,
+                                             isSlideMenuOpen: $isSlideMenuOpen,
                                              lastElementId: lastElementId,
                                              onSelection: onSelection,
                                              itemViewBuilder: itemViewBuilder,
                                              trailingActions: trailingActions)
                 }
-                .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
             }
-            // MARK: disable for now, see if necessary
-            //            .scrollDisabled(dragY != nil)
+            // Coordinate space outside of list view necessary
+            .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
+            // iPad needs scroll disabled to enable dragging items
+            // MARK: scrolling seems ok now
+//            .scrollDisabled(isEditing)
             .modifier(ItemGestureModifier(dragPosition: $dragPosition,
+                                          isSlideMenuOpen: isSlideMenuOpen,
                                           isEditing: isEditing))
             if let draggedItem = self.sidebarItemDragged,
                let dragPosition = dragPosition {
@@ -85,6 +90,7 @@ public struct StitchNestedList<Data: StitchNestedListElement,
                                              dragPosition: nil,
                                              sidebarItemDragged: .constant(nil),
                                              dragCandidateItemId: .constant(nil),
+                                             isSlideMenuOpen: $isSlideMenuOpen,
                                              lastElementId: nil,
                                              onSelection: nil,
                                              itemViewBuilder: itemViewBuilder,
