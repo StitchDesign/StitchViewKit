@@ -50,18 +50,20 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
     
     public var body: some View {
         ZStack(alignment: .topLeading) {
-            List($data,
-                 editActions: .delete) { item in
-                StitchNestedListItemView(item: item.wrappedValue,
-                                         isEditing: isEditing,
-                                         isParentSelected: false,
-                                         selections: $selections,
-                                         dragPosition: dragPosition,
-                                         yOffsetDragHack: self.yOffsetDragHack,
-                                         sidebarItemDragged: self.$sidebarItemDragged,
-                                         dragCandidateItemId: self.$dragCandidateItemId,
-                                         lastElementId: lastElementId,
-                                         itemViewBuilder: itemViewBuilder)
+            ScrollView(.vertical) {
+                ForEach($data) { item in
+                    StitchNestedListItemView(item: item.wrappedValue,
+                                             isEditing: isEditing,
+                                             isParentSelected: false,
+                                             selections: $selections,
+                                             dragPosition: dragPosition,
+                                             yOffsetDragHack: self.yOffsetDragHack,
+                                             sidebarItemDragged: self.$sidebarItemDragged,
+                                             dragCandidateItemId: self.$dragCandidateItemId,
+                                             lastElementId: lastElementId,
+                                             itemViewBuilder: itemViewBuilder)
+                }
+                .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
             }
             // MARK: disable for now, see if necessary
 //            .scrollDisabled(dragY != nil)
@@ -89,7 +91,6 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                 .disabled(true)
             }
         }
-        .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
         .animation(.easeInOut, value: self.data)
         .onChange(of: self.isEditing) {
             self.selections = .init()
