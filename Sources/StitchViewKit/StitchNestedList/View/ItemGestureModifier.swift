@@ -11,7 +11,6 @@ import SwiftUI
 struct ItemGestureModifier: ViewModifier {
     @Binding var dragPosition: CGPoint?
     
-#if !targetEnvironment(macCatalyst)
     @GestureState private var dragState = DragState.inactive
     
     enum DragState {
@@ -72,31 +71,14 @@ struct ItemGestureModifier: ViewModifier {
                 self.dragPosition = nil
             }
     }
-    #else
-    var dragGesture: some Gesture {
-        DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
-            .onChanged { gesture in
-                self.dragPosition = gesture.location
-            }
-            .onEnded { _ in
-                self.dragPosition = nil
-            }
-    }
-#endif
     
     func body(content: Content) -> some View {
         content
-#if !targetEnvironment(macCatalyst)
-            .gesture(
+            .highPriorityGesture(
                 longPress
             )
             .onChange(of: self.dragState.position) {
                 self.dragPosition = self.dragState.position
             }
-#else
-            .gesture(
-                dragGesture
-            )
-#endif
     }
 }
