@@ -12,18 +12,18 @@ public struct UngroupButton<Element: StitchNestedListElement,
                             LabelView: View>: View {
     @Binding var data: [Element]
     @Binding var selections: Set<Element.ID>
-    @Binding var editMode: EditMode
+    @Binding var isEditing: Bool
     let ungroupCallback: ((Element.ID) -> ())?
     @ViewBuilder var label: () -> LabelView
     
     public init(data: Binding<[Element]>,
                 selections: Binding<Set<Element.ID>>,
-                editMode: Binding<EditMode>,
+                isEditing: Binding<Bool>,
                 ungroupCallback: ((Element.ID) -> ())? = nil,
                 label: @escaping () -> LabelView) {
         self._data = data
         self._selections = selections
-        self._editMode = editMode
+        self._isEditing = isEditing
         self.ungroupCallback = ungroupCallback
         self.label = label
     }
@@ -49,7 +49,7 @@ public struct UngroupButton<Element: StitchNestedListElement,
             }
             
             self.selections = .init()
-            self.editMode = .inactive
+            self.isEditing = false
         } label: {
             label()
         }

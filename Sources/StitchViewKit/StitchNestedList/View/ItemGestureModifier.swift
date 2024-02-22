@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ItemGestureModifier: ViewModifier {
     @Binding var dragPosition: CGPoint?
+    let isEditing: Bool
     
     @GestureState private var dragState = DragState.inactive
     
@@ -69,13 +70,27 @@ struct ItemGestureModifier: ViewModifier {
             }
             .onEnded { finished in
                 self.dragPosition = nil
+        }
+    }
+    
+    var dragGesture: some Gesture {
+        DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
+            .onChanged { gesture in
+                self.dragPosition = gesture.location
+            }
+            .onEnded { _ in
+                self.dragPosition = nil
             }
     }
     
     func body(content: Content) -> some View {
         content
             .highPriorityGesture(
-                longPress
+                isEditing ?  dragGesture : nil
+            )
+            .highPriorityGesture(
+                // Long press is only for when we're not editing
+                !isEditing ? longPress : nil
             )
             .onChange(of: self.dragState.position) {
                 self.dragPosition = self.dragState.position

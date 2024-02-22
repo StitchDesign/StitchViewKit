@@ -7,9 +7,11 @@
 
 import Foundation
 import SwiftUI
+import SwipeActions
 
 struct StitchNestedListItemView<Data: StitchNestedListElement,
-                                RowContent: View>: View {
+                                RowContent: View,
+                                TrailingActions: View>: View {
     let item: Data
     let isEditing: Bool
     let isParentSelected: Bool
@@ -18,7 +20,9 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
     let lastElementId: Data.ID?
+    var onSelection: ((Data) -> Void)?
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
+    @ViewBuilder var trailingActions: (Data) -> TrailingActions
     
     var isDragging: Bool {
         self.sidebarItemDragged?.id == item.id
@@ -31,27 +35,24 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     var isLastElement: Bool {
         item.id == lastElementId
     }
-
+    
     var body: some View {
         Group {
-            itemViewBuilder(item, isSelected)
-            .modifier(DragIndexReader(item: item,
-                                      sidebarItemDragged: $sidebarItemDragged,
-                                      dragCandidateItemId: $dragCandidateItemId,
-                                      dragPosition: dragPosition,
-                                      isLastElement: isLastElement))
-
+            gestureView
+            
             if let children = item.children {
                 ForEach(children) { itemChild in
                     StitchNestedListItemView(item: itemChild,
-                    isEditing: isEditing,
-                                    isParentSelected: self.isSelected,
-                                    selections: $selections,
-                                    dragPosition: dragPosition,
-                                    sidebarItemDragged: $sidebarItemDragged,
-                                    dragCandidateItemId: $dragCandidateItemId,
+                                             isEditing: isEditing,
+                                             isParentSelected: self.isSelected,
+                                             selections: $selections,
+                                             dragPosition: dragPosition,
+                                             sidebarItemDragged: $sidebarItemDragged,
+                                             dragCandidateItemId: $dragCandidateItemId,
                                              lastElementId: lastElementId,
-                                             itemViewBuilder: itemViewBuilder)
+                                             onSelection: onSelection,
+                                             itemViewBuilder: itemViewBuilder,
+                                             trailingActions: trailingActions)
                 }
                 .padding(.leading, GROUP_INDENDATION)
             }
@@ -65,6 +66,46 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
                 selections.remove(item.id)
             }
         }
+    }
+    
+    @ViewBuilder
+    var gestureView: some View {
+        if isEditing {
+            // No swipe actions but enable selections
+            itemView
+                .onTapGesture {
+                    if selections.contains(item.id) {
+                        selections.remove(item.id)
+                    } else {
+                        selections.insert(item.id)
+                    }
+                }
+        } else {
+            SwipeView {
+                itemView
+                    .onTapGesture {
+                        onSelection?(item)
+                    }
+            } trailingActions: { _ in
+                trailingActions(item)
+            }
+            .swipeActionCornerRadius(8)
+            .swipeActionsMaskCornerRadius(8)
+            
+        }
+    }
+    
+    @ViewBuilder
+    var itemView: some View {
+        HStack {
+            itemViewBuilder(item, isSelected)
+            Spacer()
+        }
+            .modifier(DragIndexReader(item: item,
+                                      sidebarItemDragged: $sidebarItemDragged,
+                                      dragCandidateItemId: $dragCandidateItemId,
+                                      dragPosition: dragPosition,
+                                      isLastElement: isLastElement))
     }
 }
 

@@ -7,38 +7,44 @@
 
 import Foundation
 import SwiftUI
+import SwipeActions
 
 let STITCHNESTEDLIST_COORDINATE_SPACE = "STITCH_NESTEDLIST_COORDINATE_SPACE"
 let SWIPE_FULL_CORNER_RADIUS = 8
 let GROUP_INDENDATION: CGFloat = 40
 
-public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>: View {
-    @Environment(\.editMode) var editMode
-    
+public struct StitchNestedList<Data: StitchNestedListElement,
+                               RowContent: View,
+                               TrailingActions: View>: View {
     @State private var dragPosition: CGPoint? = .zero
     @State private var sidebarItemDragged: Data? = nil
     @State private var dragCandidateItemId: Data.ID? = nil
     
     @Binding var data: [Data]
     @Binding var selections: Set<Data.ID>
+    @Binding var isEditing: Bool
     
+    var onSelection: ((Data) -> Void)?
     @ViewBuilder var itemViewBuilder: (Data, Bool) -> RowContent
+    @ViewBuilder var trailingActions: (Data) -> TrailingActions
     
     public init(data: Binding<[Data]>,
                 selections: Binding<Set<Data.ID>>,
-                itemViewBuilder: @escaping (Data, Bool) -> RowContent) {
+                isEditing: Binding<Bool>,
+                onSelection: ((Data) -> Void)? = nil,
+                itemViewBuilder: @escaping (Data, Bool) -> RowContent,
+                trailingActions: @escaping (Data) -> TrailingActions) {
         self._data = data
         self._selections = selections
+        self._isEditing = isEditing
+        self.onSelection = onSelection
         self.itemViewBuilder = itemViewBuilder
+        self.trailingActions = trailingActions
     }
     
     /// We pass in an empty object when editing is disabled to prevent the sidebar from  updating the navigation stack
     var activeSelections: Binding<Set<Data.ID>> {
         self.isEditing ? self.$selections : .constant(.init())
-    }
-    
-    var isEditing: Bool {
-        self.editMode?.wrappedValue.isEditing ?? false
     }
     
     var lastElementId: Data.ID? {
@@ -59,13 +65,16 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              sidebarItemDragged: self.$sidebarItemDragged,
                                              dragCandidateItemId: self.$dragCandidateItemId,
                                              lastElementId: lastElementId,
-                                             itemViewBuilder: itemViewBuilder)
+                                             onSelection: onSelection,
+                                             itemViewBuilder: itemViewBuilder,
+                                             trailingActions: trailingActions)
                 }
                 .coordinateSpace(name: STITCHNESTEDLIST_COORDINATE_SPACE)
             }
             // MARK: disable for now, see if necessary
-//            .scrollDisabled(dragY != nil)
-            .modifier(ItemGestureModifier(dragPosition: $dragPosition))
+            //            .scrollDisabled(dragY != nil)
+            .modifier(ItemGestureModifier(dragPosition: $dragPosition,
+                                          isEditing: isEditing))
             if let draggedItem = self.sidebarItemDragged,
                let dragPosition = dragPosition {
                 VStack(spacing: .zero) {
@@ -77,7 +86,9 @@ public struct StitchNestedList<Data: StitchNestedListElement, RowContent: View>:
                                              sidebarItemDragged: .constant(nil),
                                              dragCandidateItemId: .constant(nil),
                                              lastElementId: nil,
-                                             itemViewBuilder: itemViewBuilder)
+                                             onSelection: nil,
+                                             itemViewBuilder: itemViewBuilder,
+                                             trailingActions: trailingActions)
                     .transition(.opacity)
                     .padding(.horizontal)
                 }

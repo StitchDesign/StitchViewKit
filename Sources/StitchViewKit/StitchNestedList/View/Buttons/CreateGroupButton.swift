@@ -12,18 +12,18 @@ public struct CreateGroupButton<Element: StitchNestedListElement,
                             LabelView: View>: View {
     @Binding var data: [Element]
     @Binding var selections: Set<Element.ID>
-    @Binding var editMode: EditMode
+    @Binding var isEditing: Bool
     let groupCreatedCallback: ((Element) -> ())?
     @ViewBuilder var label: () -> LabelView
     
     public init(data: Binding<[Element]>,
                 selections: Binding<Set<Element.ID>>,
-                editMode: Binding<EditMode>,
+                isEditing: Binding<Bool>,
                 groupCreatedCallback: ((Element) -> ())? = nil,
                 label: @escaping () -> LabelView) {
         self._data = data
         self._selections = selections
-        self._editMode = editMode
+        self._isEditing = isEditing
         self.groupCreatedCallback = groupCreatedCallback
         self.label = label
     }
@@ -48,7 +48,7 @@ public struct CreateGroupButton<Element: StitchNestedListElement,
             }
             
             self.selections = .init()
-            self.editMode = .inactive
+            self.isEditing = false
         } label: {
             label()
         }
