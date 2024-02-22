@@ -11,18 +11,18 @@ public struct DeleteSelectionsButton<Element: StitchNestedListElement,
                               LabelView: View>: View {
     @Binding var data: [Element]
     @Binding var selections: Set<Element.ID>
-    @Binding var editMode: EditMode
+    @Binding var isEditing: Bool
     var deleteSelectionsCallback: ((Set<Element.ID>) -> ())?
     @ViewBuilder var label: () -> LabelView
     
     public init(data: Binding<[Element]>,
                 selections: Binding<Set<Element.ID>>,
-                editMode: Binding<EditMode>,
+                isEditing: Binding<Bool>,
                 deleteSelectionsCallback: ((Set<Element.ID>) -> ())? = nil,
                 label: @escaping () -> LabelView) {
         self._data = data
         self._selections = selections
-        self._editMode = editMode
+        self._isEditing = isEditing
         self.deleteSelectionsCallback = deleteSelectionsCallback
         self.label = label
     }
@@ -36,7 +36,7 @@ public struct DeleteSelectionsButton<Element: StitchNestedListElement,
             }
             
             self.selections = .init()
-            self.editMode = .inactive
+            self.isEditing = false
         } label: {
             label()
         }

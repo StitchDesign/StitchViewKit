@@ -13,7 +13,6 @@ struct DragIndexReader<Data: StitchNestedListElement>: ViewModifier {
     @Binding var sidebarItemDragged: Data?
     @Binding var dragCandidateItemId: Data.ID?
     let dragPosition: CGPoint?
-    let yOffsetDragHack: CGFloat
     let isLastElement: Bool
     
     func body(content: Content) -> some View {
@@ -22,14 +21,11 @@ struct DragIndexReader<Data: StitchNestedListElement>: ViewModifier {
                 GeometryReader { geometry in
                     Color.clear
                         .onChange(of: self.dragPosition, initial: true) {
-                            guard var dragPosition = self.dragPosition else {
+                            guard let dragPosition = self.dragPosition else {
                                 self.dragCandidateItemId = nil
                                 self.sidebarItemDragged = nil
                                 return
                             }
-                            
-                            // Manual offset to get drag to match boundary boxes better
-                            dragPosition.y += yOffsetDragHack
                             
                             let frame = geometry.frame(in: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
                             let didDragPastLastElement = isLastElement && dragPosition.y > frame.maxY && self.sidebarItemDragged != nil

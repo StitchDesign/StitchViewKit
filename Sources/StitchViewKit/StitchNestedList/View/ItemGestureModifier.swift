@@ -10,8 +10,9 @@ import SwiftUI
 
 struct ItemGestureModifier: ViewModifier {
     @Binding var dragPosition: CGPoint?
+    let isSlideMenuOpen: Bool
+    let isEditing: Bool
     
-#if !targetEnvironment(macCatalyst)
     @GestureState private var dragState = DragState.inactive
     
     enum DragState {
@@ -70,9 +71,9 @@ struct ItemGestureModifier: ViewModifier {
             }
             .onEnded { finished in
                 self.dragPosition = nil
-            }
+        }
     }
-    #else
+    
     var dragGesture: some Gesture {
         DragGesture(coordinateSpace: .named(STITCHNESTEDLIST_COORDINATE_SPACE))
             .onChanged { gesture in
@@ -82,21 +83,27 @@ struct ItemGestureModifier: ViewModifier {
                 self.dragPosition = nil
             }
     }
-#endif
+    
+    var enableLongPress: Bool {
+        !isEditing && !isSlideMenuOpen
+    }
     
     func body(content: Content) -> some View {
         content
 #if !targetEnvironment(macCatalyst)
-            .gesture(
-                longPress
+            .gesture(longPress)
+        #else
+        // high pri needed for enable long press here
+            .highPriorityGesture(
+                isEditing ? dragGesture : nil
             )
+            .highPriorityGesture(
+                // Long press is only for when we're not editing
+                enableLongPress ? longPress : nil
+            )
+        #endif
             .onChange(of: self.dragState.position) {
                 self.dragPosition = self.dragState.position
             }
-#else
-            .gesture(
-                dragGesture
-            )
-#endif
     }
 }
