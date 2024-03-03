@@ -96,7 +96,6 @@ public struct StitchNestedList<Data: StitchNestedListElement,
                                              itemViewBuilder: itemViewBuilder,
                                              trailingActions: trailingActions)
                     .transition(.opacity)
-                    .padding(.horizontal)
                 }
                 .padding(.vertical, 4)
                 .background(.ultraThinMaterial)
