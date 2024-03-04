@@ -131,5 +131,9 @@ public struct StitchNestedList<Data: StitchNestedListElement,
                 print("StitchNestedViewList error: unable to find location on drag.")
             }
         }
+        .onChange(of: self.sidebarItemDragged) {
+            // Reset selection state when sidebar drag starts
+            self.selections = .init()
+        }
     }
 }
