@@ -92,7 +92,7 @@ struct ItemGestureModifier: ViewModifier {
         content
 #if !targetEnvironment(macCatalyst)
             .gesture(longPress)
-        #else
+#else
         // high pri needed for enable long press here
             .highPriorityGesture(
                 isEditing ? dragGesture : nil
@@ -101,7 +101,7 @@ struct ItemGestureModifier: ViewModifier {
                 // Long press is only for when we're not editing
                 enableLongPress ? longPress : nil
             )
-        #endif
+#endif
             .onChange(of: self.dragState.position) {
                 self.dragPosition = self.dragState.position
             }

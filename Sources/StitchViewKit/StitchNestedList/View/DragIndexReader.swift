@@ -20,7 +20,7 @@ struct DragIndexReader<Data: StitchNestedListElement>: ViewModifier {
             .background {
                 GeometryReader { geometry in
                     Color.clear
-                        .onChange(of: self.dragPosition, initial: true) {
+                        .onChange(of: self.dragPosition) {
                             guard let dragPosition = self.dragPosition else {
                                 self.dragCandidateItemId = nil
                                 self.sidebarItemDragged = nil
