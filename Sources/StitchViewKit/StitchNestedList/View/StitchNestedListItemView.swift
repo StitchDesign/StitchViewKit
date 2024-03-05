@@ -74,20 +74,14 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
     var gestureView: some View {
         if isEditing {
             // No swipe actions but enable selections
-            itemView
-                .onTapGesture {
-                    if selections.contains(item.id) {
-                        selections.remove(item.id)
-                    } else {
-                        selections.insert(item.id)
-                    }
-                }
+            interactableItemView
         } else {
+            // Disable swipe actions on catalyst
+            #if targetEnvironment(macCatalyst)
+            interactableItemView
+            #else
             SwipeView {
-                itemView
-                    .onTapGesture {
-                        onSelection?(item)
-                    }
+                interactableItemView
             } trailingActions: { context in
                 trailingActions(item)
                     .onChange(of: context.state.wrappedValue, initial: true) {
@@ -96,7 +90,24 @@ struct StitchNestedListItemView<Data: StitchNestedListElement,
             }
             .swipeActionCornerRadius(8)
             .swipeActionsMaskCornerRadius(8)
+            #endif
         }
+    }
+    
+    @ViewBuilder
+    var interactableItemView: some View {
+        itemView
+            .onTapGesture {
+                if isEditing {
+                    if selections.contains(item.id) {
+                        selections.remove(item.id)
+                    } else {
+                        selections.insert(item.id)
+                    }
+                } else {
+                    onSelection?(item)
+                }
+            }
     }
     
     @ViewBuilder

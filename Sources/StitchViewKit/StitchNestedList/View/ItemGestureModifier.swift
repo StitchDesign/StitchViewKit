@@ -94,10 +94,10 @@ struct ItemGestureModifier: ViewModifier {
             .gesture(longPress)
 #else
         // high pri needed for enable long press here
-            .highPriorityGesture(
+            .gesture(
                 isEditing ? dragGesture : nil
             )
-            .highPriorityGesture(
+            .gesture(
                 // Long press is only for when we're not editing
                 enableLongPress ? longPress : nil
             )
