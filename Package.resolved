@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vpl-codesign/SwipeActions.git",
       "state" : {
-        "revision" : "b33374bcc5f61a247098691235417540832ae310",
-        "version" : "1.0.0"
+        "revision" : "63cc57f9709e0cde213358e604ddb81d1648f210",
+        "version" : "1.0.1"
       }
     }
   ],
