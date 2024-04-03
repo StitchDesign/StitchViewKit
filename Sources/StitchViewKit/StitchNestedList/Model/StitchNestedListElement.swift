@@ -307,7 +307,7 @@ extension Array where Element: StitchNestedListElement {
         self.insert(group, at: newGroupIndex)
     }
     
-    func ungroup(selectedGroupId: Element.ID) -> [Element] {
+    public func ungroup(selectedGroupId: Element.ID) -> [Element] {
         self.flatMap { element -> [Element] in
             var element = element
             guard element.id == selectedGroupId else {
