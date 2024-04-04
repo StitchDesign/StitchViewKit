@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 public struct CreateGroupButton<Element: StitchNestedListElement,
-                            LabelView: View>: View {
+                                LabelView: View>: View {
     @Binding var data: [Element]
     @Binding var selections: Set<Element.ID>
     @Binding var isEditing: Bool
