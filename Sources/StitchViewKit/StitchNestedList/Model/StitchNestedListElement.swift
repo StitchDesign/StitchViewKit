@@ -148,6 +148,10 @@ extension Array where Element: StitchNestedListElement {
         return .invalid
     }
     
+    public func rowIndex(for id: Element.ID) -> Int? {
+        self.flattenedItems.firstIndex { $0.id == id }
+    }
+    
     var flattenedItems: [Element] {
         self.flatMap { item in
             var items = [item]
