@@ -284,8 +284,8 @@ extension Array where Element: StitchNestedListElement {
         return newGroupData
     }
     
-    mutating func insertGroup(group: Element,
-                              selections: Set<Element.ID>) {
+    public mutating func insertGroup(group: Element,
+                                     selections: Set<Element.ID>) {
         // Find the selected element at the minimum index to determine location of new group node
         // Recursively search until selections are found
         guard let newGroupIndex = self.findLowestIndex(amongst: selections) else {
@@ -307,7 +307,7 @@ extension Array where Element: StitchNestedListElement {
         self.insert(group, at: newGroupIndex)
     }
     
-    func ungroup(selectedGroupId: Element.ID) -> [Element] {
+    public func ungroup(selectedGroupId: Element.ID) -> [Element] {
         self.flatMap { element -> [Element] in
             var element = element
             guard element.id == selectedGroupId else {
