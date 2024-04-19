@@ -248,15 +248,16 @@ extension Array where Element: StitchNestedListElement {
     
     public func createGroup(newGroupId: Element.ID,
                             parentLayerGroupId: Element.ID?,
+                            currentVisitedGroupId: Element.ID? = nil, // for recursion
                             selections: Set<Element.ID>) -> Element? {
-        let idsAtHierarchy: [Element.ID?] = self.map { $0.id }
-        let atCorrectHierarchy = parentLayerGroupId == nil || idsAtHierarchy.contains(parentLayerGroupId)
+        let atCorrectHierarchy = parentLayerGroupId == currentVisitedGroupId
         
         guard atCorrectHierarchy else {
             // Recursively search children until we find the parent layer ID
             return self.compactMap { element in
                 element.children?.createGroup(newGroupId: newGroupId,
                                               parentLayerGroupId: parentLayerGroupId,
+                                              currentVisitedGroupId: element.id,
                                               selections: selections)
             }
             .first
