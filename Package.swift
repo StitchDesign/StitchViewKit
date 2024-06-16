@@ -13,7 +13,7 @@ let package = Package(
                  targets: ["StitchViewKit"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vpl-codesign/SwipeActions.git", exact: "1.0.1")
+        .package(url: "https://github.com/StitchDesign/SwipeActions.git", exact: "1.0.1")
     ],
     targets: [
         .target(name: "StitchViewKit", dependencies: ["SwipeActions"])
