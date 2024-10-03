@@ -228,7 +228,7 @@ extension Array where Element: StitchNestedListElement {
     
     public func get(_ id: Element.ID) -> Element? {
         for item in self {
-            if Sources/StitchViewKit/StitchNestedList/Model/StitchNestedListElement.swiftid == item.id {
+            if id == item.id {
                 return item
             }
             
