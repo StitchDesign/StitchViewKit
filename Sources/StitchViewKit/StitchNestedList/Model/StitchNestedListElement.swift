@@ -9,7 +9,13 @@ import Foundation
 
 public protocol StitchNestedListElement: Identifiable, Equatable {
     var children: [Self]? { get set }
-    init(id: Self.ID, children: [Self]?)
+    
+    var isExpandedInSidebar: Bool? { get set }
+    
+    init(id: Self.ID,
+         children: [Self]?,
+         isExpandedInSidebar: Bool?)
+    
     static func createId() -> Self.ID
 }
 
@@ -263,7 +269,9 @@ extension Array where Element: StitchNestedListElement {
             .first
         }
         
-        var newGroupData = Element(id: newGroupId, children: [])
+        var newGroupData = Element(id: newGroupId,
+                                   children: [],
+                                   isExpandedInSidebar: true)
         
         // Update selected nodes to report to new group node
         self.enumerated()
