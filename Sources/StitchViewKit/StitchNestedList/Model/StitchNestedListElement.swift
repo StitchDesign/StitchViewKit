@@ -154,7 +154,7 @@ extension Array where Element: StitchNestedListElement {
         return .invalid
     }
     
-    var flattenedItems: [Element] {
+    public var flattenedItems: [Element] {
         self.flatMap { item in
             var items = [item]
             items += item.children?.flattenedItems ?? []
