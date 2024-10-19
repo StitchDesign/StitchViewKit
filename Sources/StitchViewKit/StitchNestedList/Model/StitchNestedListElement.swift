@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol StitchNestedListElement: Identifiable, Equatable {
+public protocol StitchNestedListElement: Identifiable where Self.ID: Equatable {
     var children: [Self]? { get set }
     
     var isExpandedInSidebar: Bool? { get set }
@@ -213,7 +213,7 @@ extension Array where Element: StitchNestedListElement {
     }
     
     /// Places an element after the location of some ID.
-    mutating func remove(_ elementWithId: Element.ID) {
+    public mutating func remove(_ elementWithId: Element.ID) {
         for (index, item) in self.enumerated() {
             var item = item
             

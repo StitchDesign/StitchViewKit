@@ -104,7 +104,7 @@ public struct StitchNestedList<Data: StitchNestedListElement,
                 .disabled(true)
             }
         }
-        .animation(.easeInOut, value: self.data)
+//        .animation(.easeInOut, value: self.data)
         .onChange(of: self.isEditing) {
             self.selections = .init()
         }
@@ -131,7 +131,7 @@ public struct StitchNestedList<Data: StitchNestedListElement,
                 print("StitchNestedViewList error: unable to find location on drag.")
             }
         }
-        .onChange(of: self.sidebarItemDragged) {
+        .onChange(of: self.sidebarItemDragged?.id) {
             // Reset selection state when sidebar drag starts
             self.selections = .init()
         }
