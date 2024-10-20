@@ -239,7 +239,9 @@ extension Array where Element: StitchNestedListElement {
             }
             
             // Recursively check children
-            return item.children?.get(id)
+            if let result = item.children?.get(id) {
+                return result
+            }
         }
         
         return nil
