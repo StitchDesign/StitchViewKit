@@ -7,9 +7,15 @@
 
 import Foundation
 
-public protocol StitchNestedListElement: Identifiable, Equatable {
+public protocol StitchNestedListElement: Identifiable where Self.ID: Equatable {
     var children: [Self]? { get set }
-    init(id: Self.ID, children: [Self]?)
+    
+    var isExpandedInSidebar: Bool? { get set }
+    
+    init(id: Self.ID,
+         children: [Self]?,
+         isExpandedInSidebar: Bool?)
+    
     static func createId() -> Self.ID
 }
 
@@ -148,7 +154,7 @@ extension Array where Element: StitchNestedListElement {
         return .invalid
     }
     
-    var flattenedItems: [Element] {
+    public var flattenedItems: [Element] {
         self.flatMap { item in
             var items = [item]
             items += item.children?.flattenedItems ?? []
@@ -207,7 +213,7 @@ extension Array where Element: StitchNestedListElement {
     }
     
     /// Places an element after the location of some ID.
-    mutating func remove(_ elementWithId: Element.ID) {
+    public mutating func remove(_ elementWithId: Element.ID) {
         for (index, item) in self.enumerated() {
             var item = item
             
@@ -226,6 +232,13 @@ extension Array where Element: StitchNestedListElement {
         }
     }
     
+    /// Places an element after the location of some ID.
+    public mutating func remove(_ elementIdSet: Set<Element.ID>) {
+        elementIdSet.forEach {
+            self.remove($0)
+        }
+    }
+    
     public func get(_ id: Element.ID) -> Element? {
         for item in self {
             if id == item.id {
@@ -233,7 +246,9 @@ extension Array where Element: StitchNestedListElement {
             }
             
             // Recursively check children
-            return item.children?.get(id)
+            if let result = item.children?.get(id) {
+                return result
+            }
         }
         
         return nil
@@ -263,7 +278,9 @@ extension Array where Element: StitchNestedListElement {
             .first
         }
         
-        var newGroupData = Element(id: newGroupId, children: [])
+        var newGroupData = Element(id: newGroupId,
+                                   children: [],
+                                   isExpandedInSidebar: true)
         
         // Update selected nodes to report to new group node
         self.enumerated()
