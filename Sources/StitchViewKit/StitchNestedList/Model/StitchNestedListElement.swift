@@ -217,9 +217,8 @@ extension Array where Element: StitchNestedListElement {
         for (index, item) in self.enumerated() {
             var item = item
             
-            // Insert here if matching case
+            // Remove here if matching case
             if item.id == elementWithId {
-                // Check if we can do insertion or need to append
                 self.remove(at: index)
                 
                 // Exit recursion on success
@@ -234,8 +233,17 @@ extension Array where Element: StitchNestedListElement {
     
     /// Places an element after the location of some ID.
     public mutating func remove(_ elementIdSet: Set<Element.ID>) {
-        elementIdSet.forEach {
-            self.remove($0)
+        self = self.compactMap { item -> Element? in
+            var item = item
+            
+            if elementIdSet.contains(item.id) {
+                return nil
+            }
+            
+            // Recursively check children
+            item.children?.remove(elementIdSet)
+            
+            return item
         }
     }
     
