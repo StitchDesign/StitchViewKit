@@ -36,7 +36,7 @@ extension StitchNestedListElement {
     }
 }
 
-enum GroupCandidate<Element: StitchNestedListElement> {
+public enum GroupCandidate<Element: StitchNestedListElement> {
     // Nil for root case
     case valid(Element.ID?)
     case invalid
@@ -52,7 +52,7 @@ extension GroupCandidate {
         }
     }
     
-    var parentId: Element.ID? {
+    public var parentId: Element.ID? {
         switch self {
         case .valid(let id):
             return id
@@ -66,9 +66,9 @@ extension Array where Element: StitchNestedListElement {
     /// Returns `true` if selections meet the following criteria:
     /// 1. All top-level selections are located in same hierarchy (contain the same parent)
     /// 2. All top-level selections in turn have all of their children selected
-    func containsValidGroup(from selections: Set<Element.ID>,
-                            // Tracks the parent hierarchy of this candidate group, nil = root
-                            parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
+    public func containsValidGroup(from selections: Set<Element.ID>,
+                                   // Tracks the parent hierarchy of this candidate group, nil = root
+                                   parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
         // Invalid if data or selections are empty
         guard !self.isEmpty && !selections.isEmpty else {
             return .invalid
@@ -108,9 +108,8 @@ extension Array where Element: StitchNestedListElement {
             return .invalid
         }
         
-        // All elements are at same hierarchy so we can grab any element to get parent
-        let parentGroupId = self.first { selections.contains($0.id) }?.id
-        return .valid(parentGroupId)
+        // All elements are at same hierarchy so we return current visited group
+        return .valid(parentLayerGroupId)
     }
     
     /// Contains valid ungroup if selections exhaustively comprise of some group + children.
