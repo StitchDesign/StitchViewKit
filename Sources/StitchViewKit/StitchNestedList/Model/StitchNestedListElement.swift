@@ -323,13 +323,24 @@ extension Array where Element: StitchNestedListElement {
             return
         }
         
-        // Remove selections from list
-        selections.forEach {
-            self.remove($0)
-        }
+        // Remove selections from list, complete in order due to grouping
+        var newList = self.removeSelections(selections)
         
         // Add new group node to sidebar
-        self.insert(group, at: newGroupIndex)
+        newList.insert(group, at: newGroupIndex)
+        self = newList
+    }
+    
+    func removeSelections(_ selections: Set<Element.ID>) -> [Element] {
+        self.compactMap { item in
+            if selections.contains(item.id) {
+                return nil
+            }
+            
+            var item = item
+            item.children = item.children?.removeSelections(selections)
+            return item
+        }
     }
     
     public func ungroup(selectedGroupId: Element.ID) -> [Element] {
