@@ -290,23 +290,22 @@ extension Array where Element: StitchNestedListElement {
                                    isExpandedInSidebar: true)
         
         // Update selected nodes to report to new group node
-        self.enumerated()
-            .reversed() // avoids index out of bounds for multiple selections!
-            .forEach { index, element in
-                // Get layer data from sidebar to add to group
-                guard selections.contains(element.id) else {
-                    // Skip if not one of our selections
-                    return
-                }
-                
-                // Re-add it to group
-                newGroupData.children?.append(element)
-            }
-        
-        // Re-reverse children since because of our previous reversed loop
-        newGroupData.children = newGroupData.children?.reversed()
+        newGroupData.children = self.getSelectedChildrenForNewGroup(selections)
         
         return newGroupData
+    }
+    
+    func getSelectedChildrenForNewGroup(_ selections: Set<Element.ID>) -> [Element] {
+        self.flatMap { element -> [Element] in
+            // Get layer data from sidebar to add to group
+            if selections.contains(element.id) {
+                return [element]
+            }
+            
+            // Check children
+            guard let children = element.children else { return [] }
+            return children.getSelectedChildrenForNewGroup(selections)
+        }
     }
     
     public mutating func insertGroup(group: Element,
