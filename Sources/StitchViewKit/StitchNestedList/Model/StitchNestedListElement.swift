@@ -19,13 +19,27 @@ public protocol StitchNestedListElement: Identifiable where Self.ID: Equatable {
     static func createId() -> Self.ID
 }
 
-extension StitchNestedListElement {
-    var isGroup: Bool {
+/// Copy of `StitchNestedListElement` but designed for observables with `MainActor` assignment needed.
+public protocol StitchNestedListElementObservable: Identifiable, AnyObject, Observable where Self.ID: Equatable {
+    @MainActor var children: [Self]? { get set }
+    
+    @MainActor var isExpandedInSidebar: Bool? { get set }
+    
+    @MainActor
+    init(id: Self.ID,
+         children: [Self]?,
+         isExpandedInSidebar: Bool?)
+    
+    static func createId() -> Self.ID
+}
+
+extension StitchNestedListElementObservable {
+    @MainActor var isGroup: Bool {
         self.children != nil
     }
     
     /// Recursively grabs all elements from self and children.
-    public var allElementIds: Set<Self.ID> {
+    @MainActor public var allElementIds: Set<Self.ID> {
         let ids = Set([self.id])
         guard let children = self.children else {
             return ids
@@ -36,7 +50,7 @@ extension StitchNestedListElement {
     }
 }
 
-public enum GroupCandidate<Element: StitchNestedListElement> {
+public enum GroupCandidate<Element: StitchNestedListElementObservable> {
     // Nil for root case
     case valid(Element.ID?)
     case invalid
@@ -62,13 +76,13 @@ extension GroupCandidate {
     }
 }
 
-extension Array where Element: StitchNestedListElement {
+extension Array where Element: StitchNestedListElementObservable {
     /// Returns `true` if selections meet the following criteria:
     /// 1. All top-level selections are located in same hierarchy (contain the same parent)
     /// 2. All top-level selections in turn have all of their children selected
-    public func containsValidGroup(from selections: Set<Element.ID>,
-                                   // Tracks the parent hierarchy of this candidate group, nil = root
-                                   parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
+    @MainActor public func containsValidGroup(from selections: Set<Element.ID>,
+                                              // Tracks the parent hierarchy of this candidate group, nil = root
+                                              parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
         // Invalid if data or selections are empty
         guard !self.isEmpty && !selections.isEmpty else {
             return .invalid
@@ -113,7 +127,7 @@ extension Array where Element: StitchNestedListElement {
     }
     
     /// Contains valid ungroup if selections exhaustively comprise of some group + children.
-    func containsValidUngroup(from selections: Set<Element.ID>,
+    @MainActor func containsValidUngroup(from selections: Set<Element.ID>,
                               // Tracks the parent hierarchy of this candidate group, nil = root
                               parentLayerGroupId: Element.ID? = nil) -> GroupCandidate<Element> {
         // Recursively search until candidate group ID found.
@@ -153,7 +167,7 @@ extension Array where Element: StitchNestedListElement {
         return .invalid
     }
     
-    public var flattenedItems: [Element] {
+    @MainActor public var flattenedItems: [Element] {
         self.flatMap { item in
             var items = [item]
             items += item.children?.flattenedItems ?? []
@@ -163,12 +177,12 @@ extension Array where Element: StitchNestedListElement {
     
     /// Places an element after the location of some ID.
     /// If `elementWithId` is nil we insert in begginging
-    mutating func insert(_ data: Element,
+    @MainActor mutating func insert(_ data: Element,
                          after elementWithId: Element.ID?) {
         let _ = self.insert(data, after: elementWithId, isRootLevel: true)
     }
     
-    private mutating func insert(_ data: Element,
+    @MainActor private mutating func insert(_ data: Element,
                                  after elementWithId: Element.ID?,
                                  isRootLevel: Bool) -> Bool {
         guard let elementWithId = elementWithId else {
@@ -177,8 +191,6 @@ extension Array where Element: StitchNestedListElement {
         }
         
         for (index, item) in self.enumerated() {
-            var item = item
-            
             // Insert here if matching case
             if item.id == elementWithId {
                 // Check if we can do insertion or need to append
@@ -212,10 +224,8 @@ extension Array where Element: StitchNestedListElement {
     }
     
     /// Places an element after the location of some ID.
-    public mutating func remove(_ elementWithId: Element.ID) {
+    @MainActor public mutating func remove(_ elementWithId: Element.ID) {
         for (index, item) in self.enumerated() {
-            var item = item
-            
             // Remove here if matching case
             if item.id == elementWithId {
                 self.remove(at: index)
@@ -231,10 +241,8 @@ extension Array where Element: StitchNestedListElement {
     }
     
     /// Places an element after the location of some ID.
-    public mutating func remove(_ elementIdSet: Set<Element.ID>) {
+    @MainActor public mutating func remove(_ elementIdSet: Set<Element.ID>) {
         self = self.compactMap { item -> Element? in
-            var item = item
-            
             if elementIdSet.contains(item.id) {
                 return nil
             }
@@ -246,7 +254,7 @@ extension Array where Element: StitchNestedListElement {
         }
     }
     
-    public func get(_ id: Element.ID) -> Element? {
+    @MainActor public func get(_ id: Element.ID) -> Element? {
         for item in self {
             if id == item.id {
                 return item
@@ -268,7 +276,7 @@ extension Array where Element: StitchNestedListElement {
             .min { $0.offset < $1.offset }?.offset
     }
     
-    public func createGroup(newGroupId: Element.ID,
+    @MainActor public func createGroup(newGroupId: Element.ID,
                             parentLayerGroupId: Element.ID?,
                             currentVisitedGroupId: Element.ID? = nil, // for recursion
                             selections: Set<Element.ID>) -> Element? {
@@ -285,7 +293,7 @@ extension Array where Element: StitchNestedListElement {
             .first
         }
         
-        var newGroupData = Element(id: newGroupId,
+        let newGroupData = Element(id: newGroupId,
                                    children: [],
                                    isExpandedInSidebar: true)
         
@@ -295,7 +303,7 @@ extension Array where Element: StitchNestedListElement {
         return newGroupData
     }
     
-    func getSelectedChildrenForNewGroup(_ selections: Set<Element.ID>) -> [Element] {
+    @MainActor func getSelectedChildrenForNewGroup(_ selections: Set<Element.ID>) -> [Element] {
         self.flatMap { element -> [Element] in
             // Get layer data from sidebar to add to group
             if selections.contains(element.id) {
@@ -308,13 +316,12 @@ extension Array where Element: StitchNestedListElement {
         }
     }
     
-    public mutating func insertGroup(group: Element,
+    @MainActor public mutating func insertGroup(group: Element,
                                      selections: Set<Element.ID>) {
         // Find the selected element at the minimum index to determine location of new group node
         // Recursively search until selections are found
         guard let newGroupIndex = self.findLowestIndex(amongst: selections) else {
             self = self.map { element in
-                var element = element
                 element.children?.insertGroup(group: group,
                                               selections: selections)
                 return element
@@ -330,21 +337,19 @@ extension Array where Element: StitchNestedListElement {
         self = newList
     }
     
-    func removeSelections(_ selections: Set<Element.ID>) -> [Element] {
+    @MainActor func removeSelections(_ selections: Set<Element.ID>) -> [Element] {
         self.compactMap { item in
             if selections.contains(item.id) {
                 return nil
             }
             
-            var item = item
             item.children = item.children?.removeSelections(selections)
             return item
         }
     }
     
-    public func ungroup(selectedGroupId: Element.ID) -> [Element] {
+    @MainActor public func ungroup(selectedGroupId: Element.ID) -> [Element] {
         self.flatMap { element -> [Element] in
-            var element = element
             guard element.id == selectedGroupId else {
                 // Recursively search children
                 element.children = element.children?.ungroup(selectedGroupId: selectedGroupId)
@@ -357,7 +362,7 @@ extension Array where Element: StitchNestedListElement {
     }
     
     /// Finds the parent element of some element ID.
-    func findParent(of elementId: Element.ID) -> Element? {
+    @MainActor func findParent(of elementId: Element.ID) -> Element? {
         for element in self {
             // Recursion base case--if children contain ID, return parent
             if let children = element.children,
