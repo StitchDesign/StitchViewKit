@@ -12,10 +12,7 @@ let package = Package(
         .library(name: "StitchViewKit",
                  targets: ["StitchViewKit"])
     ],
-    dependencies: [
-        .package(url: "https://github.com/StitchDesign/SwipeActions.git", exact: "1.0.1")
-    ],
     targets: [
-        .target(name: "StitchViewKit", dependencies: ["SwipeActions"])
+        .target(name: "StitchViewKit")
     ]
 )
