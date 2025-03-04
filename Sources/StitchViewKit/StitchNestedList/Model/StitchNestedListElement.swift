@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol StitchNestedListElement: Identifiable where Self.ID: Equatable {
+public protocol StitchNestedListElement: Identifiable, Equatable where Self.ID: Equatable {
     var children: [Self]? { get set }
     
     var isExpandedInSidebar: Bool? { get set }
